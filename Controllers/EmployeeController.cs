@@ -156,4 +156,9 @@ public class EmployeeController : Controller
         employeeDAL.DeleteEmployee(id);
         return RedirectToAction("Index");
     }
+
+
+
+
+
 }

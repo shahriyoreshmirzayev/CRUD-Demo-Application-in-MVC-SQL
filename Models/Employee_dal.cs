@@ -43,7 +43,6 @@ public class Employee_dal
         con.Open();
         return (bool)cmd.ExecuteScalar();
     }
-    //Employee_dal klassingizda AddEmployee metodini quyidagicha o'zgartiring:
 
     //public int AddEmployee(Employee employee)
     //{
