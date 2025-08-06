@@ -1,6 +1,5 @@
 ﻿using Npgsql;
 using System.Data;
-
 namespace CRUDDEMO1.Models;
 
 public class Employee_dal

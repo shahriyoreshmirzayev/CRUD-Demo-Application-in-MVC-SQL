@@ -1,5 +1,10 @@
 ﻿using CRUDDEMO1.Models;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql.Internal;
+using OfficeOpenXml;
+using System.Xml.Linq;
 
 namespace CRUDDEMO1.Controllers;
 
@@ -12,6 +17,181 @@ public class EmployeeController : Controller
     {
         List<Employee> employees = employeeDAL.GetAllEmployee().ToList();
         return View(employees);
+    }
+
+    // Excel Export metodini qo'shamiz
+    public IActionResult ExportToExcel()
+    {
+        var employees = employeeDAL.GetAllEmployee();
+
+        using (var package = new ExcelPackage())
+        {
+            var worksheet = package.Workbook.Worksheets.Add("Employees");
+
+            // Header qo'shish
+            worksheet.Cells[1, 1].Value = "Name";
+            worksheet.Cells[1, 2].Value = "Gender";
+            worksheet.Cells[1, 3].Value = "Company";
+            worksheet.Cells[1, 4].Value = "Department";
+
+            // Header styling
+            using (var range = worksheet.Cells[1, 1, 1, 4])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+            }
+
+            // Ma'lumotlarni qo'shish
+            int row = 2;
+            foreach (var employee in employees)
+            {
+                worksheet.Cells[row, 1].Value = employee.Name;
+                worksheet.Cells[row, 2].Value = employee.Gender;
+                worksheet.Cells[row, 3].Value = employee.Company;
+                worksheet.Cells[row, 4].Value = employee.Department;
+
+                // Border qo'shish
+                using (var range = worksheet.Cells[row, 1, row, 4])
+                {
+                    range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                }
+
+                row++;
+            }
+
+            // Ustunlar kengligini avtomatik sozlash
+            worksheet.Cells.AutoFitColumns();
+
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+
+            string fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+    }
+
+    // PDF Export metodini qo'shamiz
+    public IActionResult ExportToPdf()
+    {
+        var employees = employeeDAL.GetAllEmployee();
+
+        using (var stream = new MemoryStream())
+        {
+            Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+            PdfWriter writer = PdfWriter.GetInstance(document, stream);
+            document.Open();
+
+            // Title qo'shish
+            var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
+            var title = new Paragraph("Employee List", titleFont);
+            title.Alignment = Element.ALIGN_CENTER;
+            title.SpacingAfter = 20;
+            document.Add(title);
+
+            // Jadval yaratish
+            PdfPTable table = new PdfPTable(4);
+            table.WidthPercentage = 100;
+            table.SetWidths(new float[] { 3f, 2f, 3f, 3f });
+
+            // Header qo'shish
+            var headerFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
+            table.AddCell(new PdfPCell(new Phrase("Name", headerFont)) { BackgroundColor = BaseColor.LIGHT_GRAY, Padding = 8 });
+            table.AddCell(new PdfPCell(new Phrase("Gender", headerFont)) { BackgroundColor = BaseColor.LIGHT_GRAY, Padding = 8 });
+            table.AddCell(new PdfPCell(new Phrase("Company", headerFont)) { BackgroundColor = BaseColor.LIGHT_GRAY, Padding = 8 });
+            table.AddCell(new PdfPCell(new Phrase("Department", headerFont)) { BackgroundColor = BaseColor.LIGHT_GRAY, Padding = 8 });
+
+            // Ma'lumotlarni qo'shish
+            var cellFont = FontFactory.GetFont(FontFactory.HELVETICA, 10);
+            foreach (var employee in employees)
+            {
+                table.AddCell(new PdfPCell(new Phrase(employee.Name ?? "", cellFont)) { Padding = 6 });
+                table.AddCell(new PdfPCell(new Phrase(employee.Gender ?? "", cellFont)) { Padding = 6 });
+                table.AddCell(new PdfPCell(new Phrase(employee.Company ?? "", cellFont)) { Padding = 6 });
+                table.AddCell(new PdfPCell(new Phrase(employee.Department ?? "", cellFont)) { Padding = 6 });
+            }
+
+            document.Add(table);
+            document.Close();
+            writer.Close();
+
+            string fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+            return File(stream.ToArray(), "application/pdf", fileName);
+        }
+    }
+
+    // Tanlangan xodimlarni Excel formatida yuklab olish
+    [HttpPost]
+    public IActionResult ExportSelectedToExcel([FromBody] int[] selectedIds)
+    {
+        if (selectedIds == null || selectedIds.Length == 0)
+        {
+            return BadRequest("Hech qanday xodim tanlanmagan");
+        }
+
+        var allEmployees = employeeDAL.GetAllEmployee();
+        var selectedEmployees = allEmployees.Where(e => selectedIds.Contains(e.Id)).ToList();
+
+        using (var package = new ExcelPackage())
+        {
+            var worksheet = package.Workbook.Worksheets.Add("Selected Employees");
+
+            // Header qo'shish
+            worksheet.Cells[1, 1].Value = "Name";
+            worksheet.Cells[1, 2].Value = "Gender";
+            worksheet.Cells[1, 3].Value = "Company";
+            worksheet.Cells[1, 4].Value = "Department";
+
+            // Header styling
+            using (var range = worksheet.Cells[1, 1, 1, 4])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightBlue);
+                range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+            }
+
+            // Ma'lumotlarni qo'shish
+            int row = 2;
+            foreach (var employee in selectedEmployees)
+            {
+                worksheet.Cells[row, 1].Value = employee.Name;
+                worksheet.Cells[row, 2].Value = employee.Gender;
+                worksheet.Cells[row, 3].Value = employee.Company;
+                worksheet.Cells[row, 4].Value = employee.Department;
+
+                // Border qo'shish
+                using (var range = worksheet.Cells[row, 1, row, 4])
+                {
+                    range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                }
+
+                row++;
+            }
+
+            worksheet.Cells.AutoFitColumns();
+
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+
+            string fileName = $"Selected_Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
 
     [HttpGet]
