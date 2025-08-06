@@ -78,7 +78,6 @@ public class Employee_dal
     public Employee GetEmployeeWithChildrenById(int? id)
     {
         Employee employee = null;
-
         using (NpgsqlConnection con = new(_connectionString))
         {
             string query = "SELECT * FROM get_employee_with_children(@p_id)";
@@ -86,7 +85,6 @@ public class Employee_dal
             cmd.CommandType = CommandType.Text;
             cmd.Parameters.AddWithValue("@p_id", id ?? (object)DBNull.Value);
             con.Open();
-
             using NpgsqlDataReader reader = cmd.ExecuteReader();
             bool employeeCreated = false;
 
@@ -105,7 +103,6 @@ public class Employee_dal
                     };
                     employeeCreated = true;
                 }
-
                 if (reader["children_id"] != DBNull.Value)
                 {
                     var child = new Children
@@ -134,7 +131,6 @@ public class Employee_dal
             {
                 try
                 {
-                    // Employee update
                     string employeeQuery = "SELECT sp_updateemployee(@p_id, @p_name, @p_gender, @p_company, @p_department)";
                     using (var cmd = new NpgsqlCommand(employeeQuery, con, transaction))
                     {
@@ -151,7 +147,6 @@ public class Employee_dal
                             return false;
                         }
                     }
-
                     if (employee.Children != null && employee.Children.Any())
                     {
                         foreach (var child in employee.Children)
@@ -188,7 +183,6 @@ public class Employee_dal
                             }
                         }
                     }
-
                     transaction.Commit();
                     return true;
                 }
@@ -219,7 +213,6 @@ public class Employee_dal
     {
         string query = @"INSERT INTO children (name, gender, age, school, grade, employee_id) 
                         VALUES (@name, @gender, @age, @school, @grade, @employee_id)";
-
         using var cmd = new NpgsqlCommand(query, connection, transaction);
         cmd.Parameters.AddWithValue("@name", child.Name ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@gender", child.Gender ?? (object)DBNull.Value);
@@ -244,7 +237,6 @@ public class Employee_dal
         cmd.Parameters.AddWithValue("p_school", child.School ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("p_grade", child.Grade ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("p_employee_id", child.EmployeeId);
-
         try
         {
             con.Open();
@@ -262,7 +254,6 @@ public class Employee_dal
         string query = "SELECT sp_deleteemployee(@p_id)";
         using var cmd = new NpgsqlCommand(query, con);
         cmd.Parameters.AddWithValue("p_id", id ?? (object)DBNull.Value);
-
         try
         {
             con.Open();
@@ -280,7 +271,6 @@ public class Employee_dal
         string query = "DELETE FROM children WHERE id = @id";
         using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("@id", childId);
-
         try
         {
             connection.Open();
