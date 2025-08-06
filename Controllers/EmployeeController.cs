@@ -7,126 +7,62 @@ namespace CRUDDEMO1.Controllers;
 public class EmployeeController : Controller
 {
     Employee_dal employeeDAL = new Employee_dal();
+
+    // GET: Employee/Index
     public IActionResult Index()
     {
-        List<Employee> employees = new List<Employee>();
-        employees = employeeDAL.GetAllEmployee().ToList();
+        List<Employee> employees = employeeDAL.GetAllEmployee().ToList();
         return View(employees);
     }
+
+    // GET: Employee/Create
     [HttpGet]
     public IActionResult Create()
     {
         return View();
     }
-   
-    //[HttpPost]
-    //[ValidateAntiForgeryToken]
-    //public IActionResult Create(Employee employee)
-    //{
-    //    if (ModelState.IsValid)
-    //    {
-    //        Employee_dal employeeDal = new Employee_dal();
-    //        Children_dal childrenDal = new Children_dal();
 
-    //        try
-    //        {
-    //            bool employeeResult = employeeDal.AddEmployee(employee);
-
-    //            if (employeeResult)
-    //            {
-    //                var allEmployees = employeeDal.GetAllEmployee();
-    //                var savedEmployee = allEmployees.OrderByDescending(e => e.Id).FirstOrDefault();
-
-    //                if (savedEmployee != null && employee.Children != null && employee.Children.Count > 0)
-    //                {
-    //                    foreach (var child in employee.Children)
-    //                    {
-    //                        child.EmployeeId = savedEmployee.Id; 
-    //                        childrenDal.AddChildren(child);
-    //                    }
-    //                }
-
-    //                TempData["SuccessMessage"] = "Employee and children saved successfully!";
-    //                return RedirectToAction(nameof(Index));
-    //            }
-    //            else
-    //            {
-    //                TempData["ErrorMessage"] = "Failed to save employee.";
-    //            }
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            TempData["ErrorMessage"] = "Error: " + ex.Message;
-    //        }
-    //    }
-
-    //    return View(employee);
-    //}
-
-    //[HttpGet]
-    //public IActionResult Edit(int? id)
-    //{
-    //    if (id == null)
-    //    {
-    //        return NotFound();
-    //    }
-
-    //    Employee employee = employeeDAL.GetEmployeeWithChildrenById(id);
-    //    if (employee == null)
-    //    {
-    //        return NotFound();
-    //    }
-
-    //    return View(employee);
-    //}
-
+    // POST: Employee/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Edit(int id, [Bind("Id,Name,Gender,Company,Department,Children")] Employee employee)
+    public IActionResult Create(Employee employee)
     {
-        if (id != employee.Id)
-        {
-            return NotFound();
-        }
-
         if (ModelState.IsValid)
         {
-            bool result = employeeDAL.UpdateEmployee(employee); 
-            if (result)
+            try
             {
-                return RedirectToAction("Index");
-            }
-            ModelState.AddModelError("", "Xodim ma'lumotlarini yangilashda xato yuz berdi.");
-        }
+                // Employee'ni saqlash va ID'sini olish
+                int employeeId = employeeDAL.AddEmployee(employee);
 
-        employee = employeeDAL.GetEmployeeWithChildrenById(id);
+                if (employeeId > 0)
+                {
+                    // Agar children bo'lsa, ularni ham saqlash
+                    if (employee.Children != null && employee.Children.Count > 0)
+                    {
+                        foreach (var child in employee.Children)
+                        {
+                            child.EmployeeId = employeeId;
+                            employeeDAL.CreateChildren(child);
+                        }
+                    }
+
+                    TempData["SuccessMessage"] = $"Employee va {employee.Children?.Count ?? 0} ta bola muvaffaqiyatli saqlandi!";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Employee saqlashda xato yuz berdi.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Xato: " + ex.Message);
+            }
+        }
         return View(employee);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public IActionResult EditChild(int childId, [Bind("Id,Name,Gender,Age,School,Grade,EmployeeId")] Children child)
-    {
-        if (childId != child.Id)
-        {
-            return NotFound();
-        }
-
-        if (ModelState.IsValid)
-        {
-            bool result = employeeDAL.UpdateChildren(child);
-            if (result)
-            {
-                return RedirectToAction("Details", new { id = child.EmployeeId });
-            }
-            ModelState.AddModelError("", "Bola ma'lumotlarini yangilashda xato yuz berdi.");
-        }
-
-        var employee = employeeDAL.GetEmployeeWithChildrenById(child.EmployeeId);
-        return View("Edit", employee);
-    }
-
-    [HttpGet]
+    // GET: Employee/Details
     public IActionResult Details(int? id)
     {
         if (id == null)
@@ -138,129 +74,8 @@ public class EmployeeController : Controller
 
         return View(emp);
     }
-    public IActionResult Delete(int? id)
-    {
-        if (id == null)
-            return NotFound();
-        Employee emp = employeeDAL.GetEmployeeById(id);
-        if (emp == null)
-            return NotFound();
-        return View(emp);
-        
-    }
 
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public IActionResult DeleteEmp(int? id)
-    {
-        employeeDAL.DeleteEmployee(id);
-        return RedirectToAction("Index");
-    }
-
-
-
-
-
-    // Employee Controller'dagi metodlarni yangilash
-
-    [HttpPost]
-    public IActionResult AddChild(Children child)
-    {
-        if (ModelState.IsValid)
-        {
-            Children_dal childrenDal = new Children_dal(); // Yoki Employee_dal'dan ham foydalanish mumkin
-
-            try
-            {
-                bool result = childrenDal.AddChildren(child);
-                if (result)
-                {
-                    TempData["SuccessMessage"] = "Child added successfully!";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to add child.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Error: " + ex.Message;
-            }
-        }
-        else
-        {
-            TempData["ErrorMessage"] = "Please fill all required fields.";
-        }
-
-        return RedirectToAction("Edit", new { id = child.EmployeeId });
-    }
-
-    [HttpPost]
-    public IActionResult DeleteChild(int id)
-    {
-        try
-        {
-            Children_dal childrenDal = new Children_dal();
-
-            // Avval child'ni topib, uning EmployeeId'sini olish
-            var child = childrenDal.GetChildrenById(id);
-            if (child != null && child.Id > 0)
-            {
-                bool result = childrenDal.DeleteChildren(id);
-                if (result)
-                {
-                    return Json(new { success = true, message = "Child deleted successfully" });
-                }
-                else
-                {
-                    return Json(new { success = false, message = "Failed to delete child" });
-                }
-            }
-            else
-            {
-                return Json(new { success = false, message = "Child not found" });
-            }
-        }
-        catch (Exception ex)
-        {
-            return Json(new { success = false, message = ex.Message });
-        }
-    }
-
-    [HttpPost]
-    public IActionResult EditChild(Children child)
-    {
-        if (ModelState.IsValid)
-        {
-            try
-            {
-                // Employee_dal'dagi UpdateChildren metodidan foydalanish
-                Employee_dal employeeDal = new Employee_dal();
-                bool result = employeeDal.UpdateChildren(child);
-
-                if (result)
-                {
-                    TempData["SuccessMessage"] = "Child updated successfully!";
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = "Failed to update child.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Error: " + ex.Message;
-            }
-        }
-        else
-        {
-            TempData["ErrorMessage"] = "Please fill all required fields.";
-        }
-
-        return RedirectToAction("Edit", new { id = child.EmployeeId });
-    }
-
-    // Edit GET metodini ham yangilash kerak
+    // GET: Employee/Edit
     [HttpGet]
     public IActionResult Edit(int? id)
     {
@@ -269,10 +84,7 @@ public class EmployeeController : Controller
             return NotFound();
         }
 
-        Employee_dal employeeDal = new Employee_dal();
-
-        // GetEmployeeWithChildrenById metodidan foydalanish
-        var employee = employeeDal.GetEmployeeWithChildrenById(id);
+        var employee = employeeDAL.GetEmployeeWithChildrenById(id);
         if (employee == null)
         {
             return NotFound();
@@ -281,50 +93,128 @@ public class EmployeeController : Controller
         return View(employee);
     }
 
-    // Create POST metodini ham yangilash kerak
+    // POST: Employee/Edit
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Create(Employee employee)
+    public IActionResult Edit(int id, [Bind("Id,Name,Gender,Company,Department,Children")] Employee employee)
     {
+        if (id != employee.Id)
+        {
+            return NotFound();
+        }
+
         if (ModelState.IsValid)
         {
-            Employee_dal employeeDal = new Employee_dal();
-            Children_dal childrenDal = new Children_dal();
-
             try
             {
-                // 1. Employee'ni saqlash va ID'sini olish
-                int employeeId = employeeDal.AddEmployee(employee);
+                bool result = employeeDAL.UpdateEmployee(employee);
 
-                if (employeeId > 0) // Muvaffaqiyatli saqlandi
+                if (result)
                 {
-                    // 2. Agar farzandlar bo'lsa, ularni ham saqlash
-                    if (employee.Children != null && employee.Children.Count > 0)
-                    {
-                        foreach (var child in employee.Children)
-                        {
-                            child.EmployeeId = employeeId; // Employee ID'ni set qilish
-                            childrenDal.AddChildren(child);
-                        }
-                    }
-
-                    TempData["SuccessMessage"] = $"Employee and {employee.Children?.Count ?? 0} children saved successfully!";
-                    return RedirectToAction(nameof(Index));
+                    TempData["SuccessMessage"] = "Employee va bolalar ma'lumotlari muvaffaqiyatli yangilandi!";
+                    return RedirectToAction("Index");
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to save employee.";
+                    ModelState.AddModelError("", "Ma'lumotlarni yangilashda xato yuz berdi.");
                 }
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Error: " + ex.Message;
+                ModelState.AddModelError("", "Xato: " + ex.Message);
             }
         }
 
+        // Xato bo'lsa, ma'lumotlarni qayta yuklash
+        employee = employeeDAL.GetEmployeeWithChildrenById(id);
         return View(employee);
     }
 
+    // GET: Employee/Delete
+    public IActionResult Delete(int? id)
+    {
+        if (id == null)
+            return NotFound();
 
+        Employee emp = employeeDAL.GetEmployeeById(id);
+        if (emp == null)
+            return NotFound();
 
+        return View(emp);
+    }
+
+    // POST: Employee/Delete
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeleteEmp(int? id)
+    {
+        try
+        {
+            bool result = employeeDAL.DeleteEmployee(id);
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Employee muvaffaqiyatli o'chirildi!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Employee o'chirishda xato yuz berdi.";
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Xato: " + ex.Message;
+        }
+
+        return RedirectToAction("Index");
+    }
+
+    // POST: Delete Child via AJAX
+    [HttpPost]
+    public IActionResult DeleteChild(int childId, int employeeId)
+    {
+        try
+        {
+            bool result = employeeDAL.DeleteChild(childId);
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Bola ma'lumotlari muvaffaqiyatli o'chirildi!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Bola ma'lumotlarini o'chirishda xato yuz berdi.";
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Xato: " + ex.Message;
+        }
+
+        return RedirectToAction("Edit", new { id = employeeId });
+    }
+
+    // POST: Update single child via AJAX
+    [HttpPost]
+    public JsonResult UpdateChild([FromBody] Children child)
+    {
+        try
+        {
+            if (ModelState.IsValid)
+            {
+                bool result = employeeDAL.UpdateChildren(child);
+                return Json(new
+                {
+                    success = result,
+                    message = result ? "Muvaffaqiyatli yangilandi" : "Yangilashda xato"
+                });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Ma'lumotlar to'ldirilmagan" });
+            }
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Xato: " + ex.Message });
+        }
+    }
 }

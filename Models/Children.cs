@@ -8,6 +8,6 @@ public class Children
     public int? Age { get; set; }
     public string School { get; set; } = "";
     public string Grade { get; set; } = "";
-    public int EmployeeId { get; set; } // Foreign Key
-    public Employee? Employee { get; set; } // Navigation Property
+    public int EmployeeId { get; set; } 
+    public Employee? Employee { get; set; } 
 }
