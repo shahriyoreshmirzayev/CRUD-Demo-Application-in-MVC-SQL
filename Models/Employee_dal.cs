@@ -7,7 +7,6 @@ public class Employee_dal
 {
     string _connectionString = "Host=localhost;Database=EMPLOYEEDB1;Username=postgres;Password=postgres";
 
-    // Get all employees
     public IEnumerable<Employee> GetAllEmployee()
     {
         List<Employee> employees = new();
@@ -34,7 +33,6 @@ public class Employee_dal
         return employees;
     }
 
-    // Add employee
     public int AddEmployee(Employee employee)
     {
         using (NpgsqlConnection con = new NpgsqlConnection(_connectionString))
@@ -54,7 +52,6 @@ public class Employee_dal
         }
     }
 
-    // Get employee by ID (simple)
     public Employee GetEmployeeById(int? id)
     {
         Employee employee = new Employee();
@@ -78,7 +75,6 @@ public class Employee_dal
         return employee;
     }
 
-    // Get employee with children
     public Employee GetEmployeeWithChildrenById(int? id)
     {
         Employee employee = null;
@@ -129,7 +125,6 @@ public class Employee_dal
         return employee;
     }
 
-    // Update employee with children (Transaction)
     public bool UpdateEmployee(Employee employee)
     {
         using (NpgsqlConnection con = new(_connectionString))
@@ -157,7 +152,6 @@ public class Employee_dal
                         }
                     }
 
-                    // Children handle - update existing or create new
                     if (employee.Children != null && employee.Children.Any())
                     {
                         foreach (var child in employee.Children)
@@ -166,7 +160,6 @@ public class Employee_dal
 
                             if (child.Id > 0)
                             {
-                                // Update existing child
                                 string childQuery = "SELECT sp_updatechildren(@p_id, @p_name, @p_gender, @p_age, @p_school, @p_grade, @p_employee_id)";
                                 using var cmd = new NpgsqlCommand(childQuery, con, transaction);
                                 cmd.Parameters.AddWithValue("p_id", child.Id);
@@ -186,7 +179,6 @@ public class Employee_dal
                             }
                             else
                             {
-                                // Create new child
                                 bool childCreated = CreateChildInTransaction(child, con, transaction);
                                 if (!childCreated)
                                 {
@@ -209,7 +201,6 @@ public class Employee_dal
         }
     }
 
-    // Create child (standalone)
     public bool CreateChildren(Children child)
     {
         using NpgsqlConnection con = new(_connectionString);
@@ -224,7 +215,6 @@ public class Employee_dal
         }
     }
 
-    // Create child in transaction (internal method)
     private bool CreateChildInTransaction(Children child, NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
         string query = @"INSERT INTO children (name, gender, age, school, grade, employee_id) 
@@ -242,7 +232,6 @@ public class Employee_dal
         return result > 0;
     }
 
-    // Update single child
     public bool UpdateChildren(Children child)
     {
         using NpgsqlConnection con = new(_connectionString);
@@ -267,7 +256,6 @@ public class Employee_dal
         }
     }
 
-    // Delete employee
     public bool DeleteEmployee(int? id)
     {
         using NpgsqlConnection con = new(_connectionString);
@@ -286,7 +274,6 @@ public class Employee_dal
         }
     }
 
-    // Delete child
     public bool DeleteChild(int childId)
     {
         using var connection = new NpgsqlConnection(_connectionString);

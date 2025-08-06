@@ -8,21 +8,18 @@ public class EmployeeController : Controller
 {
     Employee_dal employeeDAL = new Employee_dal();
 
-    // GET: Employee/Index
     public IActionResult Index()
     {
         List<Employee> employees = employeeDAL.GetAllEmployee().ToList();
         return View(employees);
     }
 
-    // GET: Employee/Create
     [HttpGet]
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: Employee/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Create(Employee employee)
@@ -31,12 +28,10 @@ public class EmployeeController : Controller
         {
             try
             {
-                // Employee'ni saqlash va ID'sini olish
                 int employeeId = employeeDAL.AddEmployee(employee);
 
                 if (employeeId > 0)
                 {
-                    // Agar children bo'lsa, ularni ham saqlash
                     if (employee.Children != null && employee.Children.Count > 0)
                     {
                         foreach (var child in employee.Children)
@@ -62,7 +57,6 @@ public class EmployeeController : Controller
         return View(employee);
     }
 
-    // GET: Employee/Details
     public IActionResult Details(int? id)
     {
         if (id == null)
@@ -75,7 +69,6 @@ public class EmployeeController : Controller
         return View(emp);
     }
 
-    // GET: Employee/Edit
     [HttpGet]
     public IActionResult Edit(int? id)
     {
@@ -93,7 +86,6 @@ public class EmployeeController : Controller
         return View(employee);
     }
 
-    // POST: Employee/Edit
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Edit(int id, [Bind("Id,Name,Gender,Company,Department,Children")] Employee employee)
@@ -125,12 +117,10 @@ public class EmployeeController : Controller
             }
         }
 
-        // Xato bo'lsa, ma'lumotlarni qayta yuklash
         employee = employeeDAL.GetEmployeeWithChildrenById(id);
         return View(employee);
     }
 
-    // GET: Employee/Delete
     public IActionResult Delete(int? id)
     {
         if (id == null)
@@ -143,7 +133,6 @@ public class EmployeeController : Controller
         return View(emp);
     }
 
-    // POST: Employee/Delete
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public IActionResult DeleteEmp(int? id)
@@ -168,7 +157,6 @@ public class EmployeeController : Controller
         return RedirectToAction("Index");
     }
 
-    // POST: Delete Child via AJAX
     [HttpPost]
     public IActionResult DeleteChild(int childId, int employeeId)
     {
@@ -192,7 +180,6 @@ public class EmployeeController : Controller
         return RedirectToAction("Edit", new { id = employeeId });
     }
 
-    // POST: Update single child via AJAX
     [HttpPost]
     public JsonResult UpdateChild([FromBody] Children child)
     {
