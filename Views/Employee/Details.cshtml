@@ -1,0 +1,107 @@
+﻿@model CRUDDEMO1.Models.Employee
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Details</h1>
+<h3>Employee Details</h3>
+<hr />
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- Employee Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Employee Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Name)</dt>
+                            <dd class="col-sm-8">@Html.DisplayFor(model => model.Name)</dd>
+                            
+                            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Company)</dt>
+                            <dd class="col-sm-8">@Html.DisplayFor(model => model.Company)</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Gender)</dt>
+                            <dd class="col-sm-8">@Html.DisplayFor(model => model.Gender)</dd>
+                            
+                            <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Department)</dt>
+                            <dd class="col-sm-8">@Html.DisplayFor(model => model.Department)</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Children Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Children Information</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Children != null && Model.Children.Any())
+                {
+                    <p><strong>Has Children:</strong> Ha</p>
+                    <p><strong>Bolalar soni:</strong> @Model.Children.Count</p>
+                    
+                    int childIndex = 1; 
+                    @foreach (var child in Model.Children)
+                    {
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>Child @childIndex Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">Name</dt>
+                                            <dd class="col-sm-8">@child.Name</dd>
+                                        
+                                            <dt class="col-sm-4">Age</dt>
+                                            <dd class="col-sm-8">@child.Age</dd>
+                                        </dl>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">Gender</dt>
+                                            <dd class="col-sm-8">@child.Gender</dd>
+                                            
+                                            <dt class="col-sm-4">School</dt>
+                                            <dd class="col-sm-8">@(string.IsNullOrEmpty(child.School) ? "Not specified" : child.School)</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <dl class="row">
+                                            <dt class="col-sm-2">Grade</dt>
+                                            <dd class="col-sm-10">@(string.IsNullOrEmpty(child.Grade) ? "Not specified" : child.Grade)</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        childIndex++;
+                    }
+                }
+                else
+                {
+                    <p><strong>Has Children:</strong> Yo'q</p>
+                    <p class="text-muted">This employee has no children information recorded.</p>
+                }
+            </div>
+        </div>
+
+        <div class="form-group">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+</div>

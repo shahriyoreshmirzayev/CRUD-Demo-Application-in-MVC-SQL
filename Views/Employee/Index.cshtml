@@ -1,0 +1,47 @@
+﻿@model IEnumerable<CRUDDEMO1.Models.Employee>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Gender)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Company)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Department)
+            </th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var emp in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => emp.Name)</td>
+                <td>@Html.DisplayFor(modelItem => emp.Gender)</td>
+                <td>@Html.DisplayFor(modelItem => emp.Company)</td>
+                <td>@Html.DisplayFor(modelItem => emp.Department)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@emp.Id">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@emp.Id">Delete</a> |
+                    <a asp-action="Details" asp-route-id="@emp.Id">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
