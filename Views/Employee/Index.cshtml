@@ -17,39 +17,35 @@
             <div class="card-body">
                 @if (Model != null && Model.Any())
                 {
-                    <div class="row">
-                        @foreach (var emp in Model)
-                        {
-                            <div class="col-md-12 mb-3">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div class="employee-info">
-                                                <dl class="row">
-                                                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Name)</dt>
-                                                    <dd class="col-sm-8">@Html.DisplayFor(modelItem => emp.Name)</dd>
-
-                                                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Gender)</dt>
-                                                    <dd class="col-sm-8">@Html.DisplayFor(modelItem => emp.Gender)</dd>
-
-                                                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Company)</dt>
-                                                    <dd class="col-sm-8">@Html.DisplayFor(modelItem => emp.Company)</dd>
-
-                                                    <dt class="col-sm-4">@Html.DisplayNameFor(model => model.Department)</dt>
-                                                    <dd class="col-sm-8">@Html.DisplayFor(modelItem => emp.Department)</dd>
-                                                </dl>
-                                            </div>
-                                            <div class="form-group">
-                                                <a asp-action="Edit" asp-route-id="@emp.Id" class="btn btn-warning btn-sm me-1">Edit</a>
-                                                <a asp-action="Delete" asp-route-id="@emp.Id" class="btn btn-danger btn-sm me-1">Delete</a>
-                                                <a asp-action="Details" asp-route-id="@emp.Id" class="btn btn-info btn-sm">Details</a>
-                                            </div>
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>@Html.DisplayNameFor(model => model.Name)</th>
+                                <th>@Html.DisplayNameFor(model => model.Gender)</th>
+                                <th>@Html.DisplayNameFor(model => model.Company)</th>
+                                <th>@Html.DisplayNameFor(model => model.Department)</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var emp in Model)
+                            {
+                                <tr>
+                                    <td>@Html.DisplayFor(modelItem => emp.Name)</td>
+                                    <td>@Html.DisplayFor(modelItem => emp.Gender)</td>
+                                    <td>@Html.DisplayFor(modelItem => emp.Company)</td>
+                                    <td>@Html.DisplayFor(modelItem => emp.Department)</td>
+                                    <td class="text-center">
+                                        <div class="form-group d-flex justify-content-center gap-2">
+                                            <a asp-action="Edit" asp-route-id="@emp.Id" class="btn btn-warning btn-sm">Edit</a>
+                                            <a asp-action="Delete" asp-route-id="@emp.Id" class="btn btn-danger btn-sm">Delete</a>
+                                            <a asp-action="Details" asp-route-id="@emp.Id" class="btn btn-info btn-sm">Details</a>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 }
                 else
                 {
