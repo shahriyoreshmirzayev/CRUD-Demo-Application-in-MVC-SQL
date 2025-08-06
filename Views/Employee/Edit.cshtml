@@ -60,82 +60,235 @@
         <!-- Children Information -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5>Children Information</h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5>Children Information</h5>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="showAddChildForm()">
+                        <i class="fas fa-plus"></i> Add New Child
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 @if (Model.Children != null && Model.Children.Any())
                 {
                     <p><strong>Has Children:</strong> Yes</p>
-                    <p><strong>Number of Children:</strong> @Model.Children.Count</p>
+                    <p><strong>Number of Children:</strong> <span id="childrenCount">@Model.Children.Count</span></p>
 
-                    int childIndex = 1;
-                    @foreach (var child in Model.Children)
-                    {
-                        <div class="card mt-3">
-                            <div class="card-header">
-                                <h6>Child @childIndex Information</h6>
+                    <div id="existingChildren">
+                        @{ int childIndex = 1; }
+                        @foreach (var child in Model.Children)
+                        {
+                            <div class="card mt-3 child-card" data-child-id="@child.Id">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6>Child @childIndex Information</h6>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteChild(@child.Id, this)">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <form asp-action="EditChild" asp-route-childId="@child.Id">
+                                        <input type="hidden" name="Id" value="@child.Id" />
+                                        <input type="hidden" name="EmployeeId" value="@child.EmployeeId" />
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="control-label">Name</label>
+                                                    <input name="Name" class="form-control" value="@child.Name" required />
+                                                    <span class="text-danger"></span>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="control-label">Age</label>
+                                                    <input name="Age" class="form-control" type="number" min="1" max="25" value="@child.Age" required />
+                                                    <span class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="control-label">Gender</label>
+                                                    <select name="Gender" class="form-control" required>
+                                                        <option value="">==Select Gender==</option>
+                                                        <option value="Male" selected="@(child.Gender == "Male")">Male</option>
+                                                        <option value="Female" selected="@(child.Gender == "Female")">Female</option>
+                                                    </select>
+
+                                                    <span class="text-danger"></span>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="control-label">School</label>
+                                                    <input name="School" class="form-control" value="@child.School" />
+                                                    <span class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label class="control-label">Grade</label>
+                                                    <input name="Grade" class="form-control" value="@child.Grade" />
+                                                    <span class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group mt-3">
+                                            <input type="submit" value="Update Child" class="btn btn-success" />
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <form asp-action="EditChild" asp-route-childId="@child.Id">
-                                    <input type="hidden" name="Id" value="@child.Id" />
-                                    <input type="hidden" name="EmployeeId" value="@child.EmployeeId" />
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="control-label">Name</label>
-                                                <input name="Name" class="form-control" value="@child.Name" />
-                                                <span class="text-danger"></span>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="control-label">Age</label>
-                                                <input name="Age" class="form-control" type="number" value="@child.Age" />
-                                                <span class="text-danger"></span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="control-label">Gender</label>
-                                                <select name="Gender" class="form-control">
-                                                    <option value="">==Select Gender==</option>
-                                                    <option value="Male" selected="@(child.Gender == "Male")">Male</option>
-                                                    <option value="Female" selected="@(child.Gender == "Female")">Female</option>
-                                                </select>
-                                                <span class="text-danger"></span>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="control-label">School</label>
-                                                <input name="School" class="form-control" value="@child.School" />
-                                                <span class="text-danger"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label class="control-label">Grade</label>
-                                                <input name="Grade" class="form-control" value="@child.Grade" />
-                                                <span class="text-danger"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group mt-3">
-                                        <input type="submit" value="Save Child" class="btn btn-success" />
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                        childIndex++;
-                    }
+                            childIndex++;
+                        }
+                    </div>
                 }
                 else
                 {
-                    <p><strong>Has Children:</strong> No</p>
-                    <p class="text-muted">This employee has no children information recorded.</p>
+                    <p><strong>Has Children:</strong> <span id="hasChildrenStatus">No</span></p>
+                    <p class="text-muted" id="noChildrenMessage">This employee has no children information recorded.</p>
+                    <div id="existingChildren" style="display: none;">
+                        <p><strong>Number of Children:</strong> <span id="childrenCount">0</span></p>
+                    </div>
                 }
+
+                <!-- Add New Child Form (Hidden by default) -->
+                <div id="addChildForm" class="card mt-3" style="display: none;">
+                    <div class="card-header">
+                        <h6>Add New Child</h6>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="AddChild" asp-route-employeeId="@Model.Id">
+                            <input type="hidden" name="EmployeeId" value="@Model.Id" />
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="control-label">Name</label>
+                                        <input name="Name" class="form-control" required />
+                                        <span class="text-danger"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label">Age</label>
+                                        <input name="Age" class="form-control" type="number" min="1" max="25" required />
+                                        <span class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="control-label">Gender</label>
+                                        <select name="Gender" class="form-control" required>
+                                            <option value="">==Select Gender==</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                        <span class="text-danger"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label">School</label>
+                                        <input name="School" class="form-control" />
+                                        <span class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="control-label">Grade</label>
+                                        <input name="Grade" class="form-control" />
+                                        <span class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group mt-3">
+                                <input type="submit" value="Add Child" class="btn btn-success" />
+                                <button type="button" class="btn btn-secondary" onclick="hideAddChildForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function showAddChildForm() {
+    document.getElementById('addChildForm').style.display = 'block';
+    
+    // Agar hech qanday farzand bo'lmasa, status'ni o'zgartirish
+    const hasChildrenStatus = document.getElementById('hasChildrenStatus');
+    const noChildrenMessage = document.getElementById('noChildrenMessage');
+    const existingChildren = document.getElementById('existingChildren');
+    
+    if (hasChildrenStatus) {
+        hasChildrenStatus.textContent = 'Yes';
+        if (noChildrenMessage) noChildrenMessage.style.display = 'none';
+        existingChildren.style.display = 'block';
+    }
+}
+
+function hideAddChildForm() {
+    document.getElementById('addChildForm').style.display = 'none';
+    
+    // Form'ni tozalash
+    const form = document.querySelector('#addChildForm form');
+    form.reset();
+}
+
+function deleteChild(childId, button) {
+    if (confirm('Are you sure you want to delete this child?')) {
+        // AJAX orqali o'chirish
+        fetch(`/Employee/DeleteChild/${childId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Card'ni o'chirish
+                const childCard = button.closest('.child-card');
+                childCard.remove();
+                
+                // Children sonini yangilash
+                updateChildrenCount();
+                
+                alert('Child deleted successfully!');
+            } else {
+                alert('Error deleting child: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting child');
+        });
+    }
+}
+
+function updateChildrenCount() {
+    const childCards = document.querySelectorAll('.child-card');
+    const count = childCards.length;
+    const countElement = document.getElementById('childrenCount');
+    const hasChildrenStatus = document.getElementById('hasChildrenStatus');
+    const noChildrenMessage = document.getElementById('noChildrenMessage');
+    const existingChildren = document.getElementById('existingChildren');
+    
+    if (countElement) {
+        countElement.textContent = count;
+    }
+    
+    if (count === 0) {
+        if (hasChildrenStatus) hasChildrenStatus.textContent = 'No';
+        if (noChildrenMessage) noChildrenMessage.style.display = 'block';
+        if (existingChildren) existingChildren.style.display = 'none';
+    }
+    
+    // Child nomlarini qayta raqamlash
+    childCards.forEach((card, index) => {
+        const header = card.querySelector('.card-header h6');
+        if (header) {
+            header.textContent = `Child ${index + 1} Information`;
+        }
+    });
+}
+</script>
 
 @section Scripts {
     @{

@@ -30,7 +30,7 @@ public class Employee_dal
         }
         return employees;
     }
-    public bool AddEmployee(Employee employee)
+    /*public bool AddEmployee(Employee employee)
     {
         using NpgsqlConnection con = new(_connectionString);
         string query = "SELECT sp_insertemployee(@p_name, @p_gender, @p_company, @p_department)";
@@ -42,27 +42,27 @@ public class Employee_dal
         cmd.Parameters.AddWithValue("p_department", employee.Department);
         con.Open();
         return (bool)cmd.ExecuteScalar();
+    }*/
+
+    public int AddEmployee(Employee employee)
+    {
+        using (NpgsqlConnection con = new NpgsqlConnection(_connectionString))
+        {
+            string query = "SELECT sp_insertemployee(@p_name, @p_gender, @p_company, @p_department)";
+            using (NpgsqlCommand cmd = new NpgsqlCommand(query, con))
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Parameters.AddWithValue("p_name", employee.Name);
+                cmd.Parameters.AddWithValue("p_gender", employee.Gender);
+                cmd.Parameters.AddWithValue("p_company", employee.Company);
+                cmd.Parameters.AddWithValue("p_department", employee.Department);
+                con.Open();
+
+                var result = cmd.ExecuteScalar();
+                return Convert.ToInt32(result); // Employee ID qaytaradi
+            }
+        }
     }
-
-    //public int AddEmployee(Employee employee)
-    //{
-    //    using (NpgsqlConnection con = new NpgsqlConnection(_connectionString))
-    //    {
-    //        string query = "SELECT sp_insertemployee(@p_name, @p_gender, @p_company, @p_department)";
-    //        using (NpgsqlCommand cmd = new NpgsqlCommand(query, con))
-    //        {
-    //            cmd.CommandType = CommandType.Text;
-    //            cmd.Parameters.AddWithValue("p_name", employee.Name);
-    //            cmd.Parameters.AddWithValue("p_gender", employee.Gender);
-    //            cmd.Parameters.AddWithValue("p_company", employee.Company);
-    //            cmd.Parameters.AddWithValue("p_department", employee.Department);
-    //            con.Open();
-
-    //            var result = cmd.ExecuteScalar();
-    //            return Convert.ToInt32(result); // Employee ID qaytaradi
-    //        }
-    //    }
-    //}
     public bool UpdateEmployee(Employee employee)
     {
         using (NpgsqlConnection con = new(_connectionString))
