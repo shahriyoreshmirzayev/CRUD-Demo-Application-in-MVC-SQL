@@ -3,6 +3,8 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using System.Drawing;
 
 namespace CRUDDEMO1.Controllers;
 
@@ -20,53 +22,58 @@ public class EmployeeController : Controller
     public IActionResult ExportToExcel()
     {
         var employees = employeeDAL.GetAllEmployee();
-
         using (var package = new ExcelPackage())
         {
             var worksheet = package.Workbook.Worksheets.Add("Employees");
+            var templateCell = worksheet.Cells[1, 1];
+            templateCell.Value = "ID";
+            templateCell.Style.Font.Bold = true;
+            templateCell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            templateCell.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            templateCell.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            templateCell.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            templateCell.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            templateCell.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+            templateCell.Style.Border.Top.Color.SetColor(Color.Black);
+            templateCell.Style.Border.Bottom.Color.SetColor(Color.Black);
+            templateCell.Style.Border.Left.Color.SetColor(Color.Black);
+            templateCell.Style.Border.Right.Color.SetColor(Color.Black);
 
-            worksheet.Cells[1, 1].Value = "Name";
-            worksheet.Cells[1, 2].Value = "Gender";
-            worksheet.Cells[1, 3].Value = "Company";
-            worksheet.Cells[1, 4].Value = "Department";
-
-            using (var headerRange = worksheet.Cells[1, 1, 1, 4])
+            for (int col = 2; col <= 5; col++)
             {
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                headerRange.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-                headerRange.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                headerRange.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                headerRange.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                headerRange.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                worksheet.Cells[1, 1].Copy(worksheet.Cells[1, col]);
             }
+
+            worksheet.Cells[1, 2].Value = "Name";
+            worksheet.Cells[1, 3].Value = "Gender";
+            worksheet.Cells[1, 4].Value = "Company";
+            worksheet.Cells[1, 5].Value = "Department";
+
             int row = 2;
-            foreach (var employee in employees)
+            foreach (var emp in employees)
             {
-                worksheet.Cells[row, 1].Value = employee.Name;
-                worksheet.Cells[row, 2].Value = employee.Gender;
-                worksheet.Cells[row, 3].Value = employee.Company;
-                worksheet.Cells[row, 4].Value = employee.Department;
+                for (int col = 1; col <= 5; col++)
+                {
+                    worksheet.Cells[1, 1].Copy(worksheet.Cells[row, col]);
+                    worksheet.Cells[row, col].Style.Font.Bold = false;
+                }
+
+                worksheet.Cells[row, 1].Value = emp.Id;
+                worksheet.Cells[row, 2].Value = emp.Name;
+                worksheet.Cells[row, 3].Value = emp.Gender;
+                worksheet.Cells[row, 4].Value = emp.Company;
+                worksheet.Cells[row, 5].Value = emp.Department;
                 row++;
             }
-            if (row > 2)
-            {
-                var dataRange = worksheet.Cells[2, 1, row - 1, 4];
-                dataRange.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                dataRange.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                dataRange.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                dataRange.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-            }
+
+            var allDataRange = worksheet.Cells[1, 1, row - 1, 4];
+
             worksheet.Cells.AutoFitColumns();
-            var stream = new MemoryStream();
-            package.SaveAs(stream);
-            stream.Position = 0;
-            string fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            var fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            var fileContents = package.GetAsByteArray();
+            return File(fileContents, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
-
-
     public IActionResult ExportToPdf()
     {
         var employees = employeeDAL.GetAllEmployee();
