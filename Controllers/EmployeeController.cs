@@ -24,38 +24,23 @@ public class EmployeeController : Controller
         var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "Employee.xlsx");
         using (var package = new ExcelPackage(new FileInfo(templatePath)))
         {
+            
             var worksheet = package.Workbook.Worksheets[0];
-
-            // Template formatini saqlash (Clear qilishdan oldin)
-            var templateFormat = new
-            {
-                Border = worksheet.Cells["A1:B2"].Style.Border,
-                Font = worksheet.Cells["A1:B2"].Style.Font,
-                Fill = worksheet.Cells["A1:B2"].Style.Fill,
-                NumberFormat = worksheet.Cells["A1:B2"].Style.Numberformat,
-                HorizontalAlignment = worksheet.Cells["A1:B2"].Style.HorizontalAlignment,
-                VerticalAlignment = worksheet.Cells["A1:B2"].Style.VerticalAlignment
-            };
-
-            // Faqat value'larni clear qilish (format saqlab qolish uchun)
-            for (int row = 1; row <= worksheet.Dimension.Rows; row++)
-            {
-                for (int col = 1; col <= worksheet.Dimension.Columns; col++)
-                {
-                    worksheet.Cells[row, col].Value = null;
-                }
-            }
+            //if (worksheet == null)
+            //{
+            //    throw new InvalidOperationException("Fayl topilmadi");
+            //}
 
             for (int i = 0; i < employees.Count; i++)
             {
                 int currentColumn = 1 + (i * 2);
                 var employee = employees[i];
+                if (employee == null) continue;
 
-                // Template formatini qo'llash
+                var sourceRange = worksheet.Cells["A1:B2"];
                 var targetRange = worksheet.Cells[1, currentColumn, 2, currentColumn + 1];
-                worksheet.Cells["A1:B2"].Copy(targetRange);
+                sourceRange.Copy(targetRange);
 
-                // Ma'lumotlarni to'ldirish
                 worksheet.Cells[1, currentColumn].Value = employee.Name;
                 worksheet.Cells[2, currentColumn].Value = employee.Gender;
                 worksheet.Cells[2, currentColumn + 1].Value = employee.Company;
