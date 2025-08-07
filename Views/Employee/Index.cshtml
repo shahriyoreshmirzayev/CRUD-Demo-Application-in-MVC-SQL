@@ -17,9 +17,6 @@
             <a asp-action="ExportToPdf" class="btn btn-danger">
                 <i class="fas fa-file-pdf"></i> Export to PDF
             </a>
-            <button type="button" class="btn btn-info" onclick="exportSelected()">
-                <i class="fas fa-download"></i> Export Selected
-            </button>
         </div>
         <a asp-action="Create" class="btn btn-primary">Create New</a>
     </div>
@@ -38,9 +35,6 @@
                         <table class="table table-striped table-bordered" id="employeeTable">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="width: 40px;">
-                                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="form-check-input">
-                                    </th>
                                     <th>@Html.DisplayNameFor(model => model.Name)</th>
                                     <th>@Html.DisplayNameFor(model => model.Gender)</th>
                                     <th>@Html.DisplayNameFor(model => model.Company)</th>
@@ -52,9 +46,6 @@
                                 @foreach (var emp in Model)
                                 {
                                     <tr>
-                                        <td>
-                                            <input type="checkbox" class="employee-checkbox form-check-input" value="@emp.Id">
-                                        </td>
                                         <td>@Html.DisplayFor(modelItem => emp.Name)</td>
                                         <td>@Html.DisplayFor(modelItem => emp.Gender)</td>
                                         <td>@Html.DisplayFor(modelItem => emp.Company)</td>
@@ -123,130 +114,8 @@
 
 <!-- JavaScript -->
 <script>
-    // Barchasini tanlash/bekor qilish
-    function toggleSelectAll() {
-        const selectAll = document.getElementById('selectAll');
-        const checkboxes = document.querySelectorAll('.employee-checkbox');
-
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = selectAll.checked;
-        });
-
-        updateSelectAllState();
-    }
-
-    // Select All holatin yangilash
-    function updateSelectAllState() {
-        const selectAll = document.getElementById('selectAll');
-        const checkboxes = document.querySelectorAll('.employee-checkbox');
-        const checkedBoxes = document.querySelectorAll('.employee-checkbox:checked');
-
-        if (checkedBoxes.length === 0) {
-            selectAll.checked = false;
-            selectAll.indeterminate = false;
-        } else if (checkedBoxes.length === checkboxes.length) {
-            selectAll.checked = true;
-            selectAll.indeterminate = false;
-        } else {
-            selectAll.checked = false;
-            selectAll.indeterminate = true;
-        }
-    }
-
-    // Tanlangan elementlarni export qilish
-    function exportSelected() {
-        const selectedIds = [];
-        const checkedBoxes = document.querySelectorAll('.employee-checkbox:checked');
-
-        if (checkedBoxes.length === 0) {
-            alert('Please select at least one employee!');
-            return;
-        }
-
-        checkedBoxes.forEach(checkbox => {
-            selectedIds.push(parseInt(checkbox.value));
-        });
-
-        // Loading modal ko'rsatish
-        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-        loadingModal.show();
-
-        // AJAX orqali tanlangan ma'lumotlarni yuborish
-        fetch('@Url.Action("ExportSelectedToExcel", "Employee")', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-            },
-            body: JSON.stringify(selectedIds)
-        })
-        .then(response => {
-            loadingModal.hide();
-            if (response.ok) {
-                return response.blob();
-            }
-            throw new Error('Network response was not ok');
-        })
-        .then(blob => {
-            // Faylni yuklab olish
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `Selected_Employees_${new Date().toISOString().slice(0,10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-
-            // Success message
-            showToast('Selected employees exported successfully!', 'success');
-        })
-        .catch(error => {
-            loadingModal.hide();
-            console.error('Error:', error);
-            showToast('Error occurred while exporting!', 'error');
-        });
-    }
-
-    // Toast notification
-    function showToast(message, type) {
-        const toastHtml = `
-            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-
-        const toastContainer = document.getElementById('toast-container') || createToastContainer();
-        toastContainer.innerHTML = toastHtml;
-
-        const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
-        toast.show();
-    }
-
-    // Toast container yaratish
-    function createToastContainer() {
-        const container = document.createElement('div');
-        container.id = 'toast-container';
-        container.className = 'toast-container position-fixed top-0 end-0 p-3';
-        document.body.appendChild(container);
-        return container;
-    }
-
-    // Document ready
+    // Auto-hide alerts after 5 seconds
     document.addEventListener('DOMContentLoaded', function() {
-        // Checkbox holatlarini kuzatish
-        const checkboxes = document.querySelectorAll('.employee-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', updateSelectAllState);
-        });
-
-        // Auto-hide alerts after 5 seconds
         const alerts = document.querySelectorAll('.alert');
         alerts.forEach(alert => {
             setTimeout(() => {
@@ -256,5 +125,4 @@
             }, 5000);
         });
     });
-
-    // Export
+</script>
