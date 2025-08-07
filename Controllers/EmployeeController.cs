@@ -25,25 +25,42 @@ public class EmployeeController : Controller
         using (var package = new ExcelPackage(new FileInfo(templatePath)))
         {
             var worksheet = package.Workbook.Worksheets[0];
-            worksheet.Cells.Clear();
+
+            // Template formatini saqlash (Clear qilishdan oldin)
+            var templateFormat = new
+            {
+                Border = worksheet.Cells["A1:B2"].Style.Border,
+                Font = worksheet.Cells["A1:B2"].Style.Font,
+                Fill = worksheet.Cells["A1:B2"].Style.Fill,
+                NumberFormat = worksheet.Cells["A1:B2"].Style.Numberformat,
+                HorizontalAlignment = worksheet.Cells["A1:B2"].Style.HorizontalAlignment,
+                VerticalAlignment = worksheet.Cells["A1:B2"].Style.VerticalAlignment
+            };
+
+            // Faqat value'larni clear qilish (format saqlab qolish uchun)
+            for (int row = 1; row <= worksheet.Dimension.Rows; row++)
+            {
+                for (int col = 1; col <= worksheet.Dimension.Columns; col++)
+                {
+                    worksheet.Cells[row, col].Value = null;
+                }
+            }
 
             for (int i = 0; i < employees.Count; i++)
             {
                 int currentColumn = 1 + (i * 2);
                 var employee = employees[i];
 
-                var range = worksheet.Cells[1, currentColumn, 2, currentColumn + 1];
-                range.Style.Border.Top.Style = ExcelBorderStyle.Thick;
-                range.Style.Border.Bottom.Style = ExcelBorderStyle.Thick;
-                range.Style.Border.Left.Style = ExcelBorderStyle.Thick;
-                range.Style.Border.Right.Style = ExcelBorderStyle.Thick;
+                // Template formatini qo'llash
+                var targetRange = worksheet.Cells[1, currentColumn, 2, currentColumn + 1];
+                worksheet.Cells["A1:B2"].Copy(targetRange);
 
-                worksheet.Cells[1, currentColumn, 1, currentColumn + 1].Merge = true;
+                // Ma'lumotlarni to'ldirish
                 worksheet.Cells[1, currentColumn].Value = employee.Name;
-
                 worksheet.Cells[2, currentColumn].Value = employee.Gender;
                 worksheet.Cells[2, currentColumn + 1].Value = employee.Company;
             }
+
             var fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             return File(package.GetAsByteArray(),
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
