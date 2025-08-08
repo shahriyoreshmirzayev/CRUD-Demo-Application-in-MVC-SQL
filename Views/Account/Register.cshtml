@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Ro‘yxatdan o‘tish";
+}
+
+<h2>Ro‘yxatdan o‘tish</h2>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<form method="post" action="/Account/Register">
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" name="username" class="form-control" required />
+    </div>
+    <div class="form-group">
+        <label for="password">Parol</label>
+        <input type="password" name="password" class="form-control" required />
+    </div>
+    <div class="form-group">
+        <label for="role">Rol</label>
+        <select name="role" class="form-control" required>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Ro‘yxatdan o‘tish</button>
+</form>
+<p>Sizda hisob bormi? <a href="/Account/Login">Tizimga kirish</a></p>

@@ -18,7 +18,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "launchUrl": "Employee/Index"
+      //"launchUrl": "Employee/Index"
     }
   }
 }

@@ -1,11 +1,13 @@
 ﻿using CRUDDEMO1.Models;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
 
 namespace CRUDDEMO1.Controllers;
 
+[Authorize]
 [Route("[controller]/[action]")]
 public class EmployeeController : Controller
 {

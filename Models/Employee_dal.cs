@@ -1,10 +1,99 @@
 ﻿using Npgsql;
+using Org.BouncyCastle.Crypto.Generators;
 using System.Data;
 namespace CRUDDEMO1.Models;
 
 public class Employee_dal
 {
     string _connectionString = "Host=localhost;Database=EMPLOYEEDB1;Username=postgres;Password=postgres";
+    public bool RegisterUser(string username, string password, string role)
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            string query = "INSERT INTO users (username, password_hash, role) VALUES (@username, @password_hash, @role)";
+            using var command = new NpgsqlCommand(query, connection);
+            command.Parameters.AddWithValue("username", username);
+            command.Parameters.AddWithValue("password_hash", BCrypt.Net.BCrypt.HashPassword(password));
+            command.Parameters.AddWithValue("role", role);
+
+            connection.Open();
+            int result = command.ExecuteNonQuery();
+            return result > 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+
+    // Username mavjudligini tekshirish
+    public bool UserExists(string username)
+    {
+        using var connection = new NpgsqlConnection(_connectionString);
+        string query = "SELECT COUNT(*) FROM users WHERE username = @username";
+        using var command = new NpgsqlCommand(query, connection);
+        command.Parameters.AddWithValue("username", username);
+
+        connection.Open();
+        long count = (long)command.ExecuteScalar();
+        return count > 0;
+    }
+
+    // Parolni qayta tiklash
+    public bool ResetPassword(string username, string newPassword)
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            string query = "UPDATE users SET password_hash = @password_hash WHERE username = @username";
+            using var command = new NpgsqlCommand(query, connection);
+            command.Parameters.AddWithValue("username", username);
+            command.Parameters.AddWithValue("password_hash", BCrypt.Net.BCrypt.HashPassword(newPassword));
+
+            connection.Open();
+            int result = command.ExecuteNonQuery();
+            return result > 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // Avvalgi GetUserByUsername va ValidateUser metodlari
+    public User GetUserByUsername(string username)
+    {
+        using var connection = new NpgsqlConnection(_connectionString);
+        string query = "SELECT * FROM users WHERE username = @username";
+        using var command = new NpgsqlCommand(query, connection);
+        command.Parameters.AddWithValue("username", username);
+
+        connection.Open();
+        using var reader = command.ExecuteReader();
+        if (reader.Read())
+        {
+            return new User
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("id")),
+                Username = reader.GetString(reader.GetOrdinal("username")),
+                PasswordHash = reader.GetString(reader.GetOrdinal("password_hash")),
+                Role = reader.GetString(reader.GetOrdinal("role"))
+            };
+        }
+        return null;
+    }
+
+    public bool ValidateUser(string username, string password)
+    {
+        var user = GetUserByUsername(username);
+        if (user == null) return false;
+        return BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+    }
+
+
+
 
     public IEnumerable<Employee> GetAllEmployee()
     {
