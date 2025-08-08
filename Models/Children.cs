@@ -5,6 +5,8 @@ namespace CRUDDEMO1.Models;
 public class Children
 {
     public int Id { get; set; }
+
+    [StringLength(50, ErrorMessage = "Name 50 ta belgidan oshmasligi kerak")]
     public string Name { get; set; } = "";
 
     [Required(ErrorMessage = "Jins tanlanishi majburiy")]

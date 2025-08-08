@@ -22,9 +22,12 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="Name" class="control-label"></label>
-                                <input asp-for="Name" class="form-control" required />
+                                <label asp-for="Name" class="control-label">Employee Name <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control" required maxlength="50"
+                                       placeholder=" "
+                                       oninput="validateNameLength(this)" />
                                 <span asp-validation-for="Name" class="text-danger"></span>
+                                <small class="text-muted"> </small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -101,6 +104,86 @@
 </div>
 
 <script>
+    // Name uzunligi validation
+    function validateNameLength(input) {
+        const maxLength = parseInt(input.maxLength);
+        const currentLength = input.value.length;
+        const counter = document.getElementById('nameCounter');
+
+        // Counter ni yangilash
+        if (counter) {
+            counter.textContent = currentLength;
+        }
+
+        // Visual feedback
+        input.classList.remove('is-valid', 'is-invalid');
+
+        if (currentLength > maxLength) {
+            input.classList.add('is-invalid');
+
+            // Xato xabarini ko'rsatish
+            let errorDiv = input.parentNode.querySelector('.name-length-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'name-length-error text-danger small mt-1';
+                input.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.textContent = `Nom ${maxLength} ta belgidan oshmasligi kerak!`;
+            return false;
+        } else if (currentLength > 0) {
+            input.classList.add('is-valid');
+
+            // Xato xabarini olib tashlash
+            const errorDiv = input.parentNode.querySelector('.name-length-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            return true;
+        }
+
+        return true;
+    }
+
+    // Child name uzunligi validation
+    function validateChildNameLength(input, index) {
+        const maxLength = parseInt(input.maxLength);
+        const currentLength = input.value.length;
+        const counter = document.getElementById(`childNameCounter${index}`);
+
+        // Counter ni yangilash
+        if (counter) {
+            counter.textContent = currentLength;
+        }
+
+        // Visual feedback
+        input.classList.remove('is-valid', 'is-invalid');
+
+        if (currentLength > maxLength) {
+            input.classList.add('is-invalid');
+
+            // Xato xabarini ko'rsatish
+            let errorDiv = input.parentNode.querySelector('.name-length-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'name-length-error text-danger small mt-1';
+                input.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.textContent = `Nom ${maxLength} ta belgidan oshmasligi kerak!`;
+            return false;
+        } else if (currentLength > 0) {
+            input.classList.add('is-valid');
+
+            // Xato xabarini olib tashlash
+            const errorDiv = input.parentNode.querySelector('.name-length-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            return true;
+        }
+
+        return true;
+    }
+
     // Yosh validation funksiyasi
     function validateAge(input) {
         const value = parseInt(input.value);
@@ -190,8 +273,10 @@
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label class="control-label">Name <span class="text-danger">*</span></label>
-                                        <input name="Children[${i}].Name" class="form-control" required
-                                               placeholder="Bolaning ismini kiriting" />
+                                        <input name="Children[${i}].Name" class="form-control child-name" required maxlength="50"
+                                               placeholder=" "
+                                               oninput="validateChildNameLength(this, ${i})" />
+                                        <small class="text-muted"> </small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -211,9 +296,9 @@
                                         <label class="control-label">Age <span class="text-danger">*</span></label>
                                         <input name="Children[${i}].Age" type="number" min="0" max="50"
                                                class="form-control child-age" required
-                                               placeholder="0-50" title="Yosh 0 dan 50 gacha bo'lishi kerak"
+                                               placeholder=" " title=" "
                                                oninput="validateAge(this)" />
-                                        <small class="text-muted">0-50 yosh oralig'ida</small>
+                                        <small class="text-muted"> </small>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -263,6 +348,10 @@
                 isValid = false;
                 input.classList.add('is-invalid');
                 errorMessages.push(`${field} maydoni to'ldirilishi shart!`);
+            } else if (field === 'Name' && input.value.length > 50) {
+                isValid = false;
+                input.classList.add('is-invalid');
+                errorMessages.push('Employee nomi 50 ta belgidan oshmasligi kerak!');
             } else {
                 input.classList.remove('is-invalid');
                 input.classList.add('is-valid');
@@ -289,6 +378,10 @@
                         isValid = false;
                         input.classList.add('is-invalid');
                         errorMessages.push(`${index + 1}-bola nomi kiritilishi shart!`);
+                    } else if (input.value.length > 50) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                        errorMessages.push(`${index + 1}-bola nomi 50 ta belgidan oshmasligi kerak!`);
                     } else {
                         input.classList.remove('is-invalid');
                         input.classList.add('is-valid');

@@ -10,13 +10,11 @@ namespace CRUDDEMO1.Controllers;
 public class EmployeeController : Controller
 {
     Employee_dal employeeDAL = new Employee_dal();
-
     public IActionResult Index()
     {
-        List<Employee> employees = employeeDAL.GetAllEmployee().ToList();
+        List<Employee> employees = employeeDAL.GetAllEmployee().OrderByDescending(e => e.Id).ToList();
         return View(employees);
     }
-
     public IActionResult ExportToExcel()
     {
         var employees = employeeDAL.GetAllEmployee().ToList();
@@ -30,16 +28,13 @@ public class EmployeeController : Controller
                 int currentColumn = 1 + (i * 2);
                 var employee = employees[i];
                 if (employee == null) continue;
-
                 var sourceRange = worksheet.Cells["A1:B2"];
                 var targetRange = worksheet.Cells[1, currentColumn, 2, currentColumn + 1];
                 sourceRange.Copy(targetRange);
-
                 worksheet.Cells[1, currentColumn].Value = employee.Name;
                 worksheet.Cells[2, currentColumn].Value = employee.Gender;
                 worksheet.Cells[2, currentColumn + 1].Value = employee.Company;
             }
-
             var fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             return File(package.GetAsByteArray(),
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -50,7 +45,6 @@ public class EmployeeController : Controller
     public IActionResult ExportToPdf()
     {
         var employees = employeeDAL.GetAllEmployee();
-
         using (var stream = new MemoryStream())
         {
             Document document = new Document(PageSize.A4, 10, 10, 10, 10);
@@ -77,11 +71,9 @@ public class EmployeeController : Controller
                 table.AddCell(new PdfPCell(new Phrase(employee.Company ?? "", cellFont)) { Padding = 6 });
                 table.AddCell(new PdfPCell(new Phrase(employee.Department ?? "", cellFont)) { Padding = 6 });
             }
-
             document.Add(table);
             document.Close();
             writer.Close();
-
             string fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
             return File(stream.ToArray(), "application/pdf", fileName);
         }
