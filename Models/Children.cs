@@ -9,6 +9,8 @@ public class Children
 
     [Required(ErrorMessage = "Jins tanlanishi majburiy")]
     public string Gender { get; set; } = "";
+
+    [Range(0, 50, ErrorMessage = "Yosh 0 dan 50 gacha bo'lishi kerak")]
     public int? Age { get; set; }
     public string School { get; set; } = "";
     public string Grade { get; set; } = "";

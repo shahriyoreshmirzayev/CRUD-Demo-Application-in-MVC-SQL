@@ -73,7 +73,6 @@ public class Employee_dal
         }
         return employee;
     }
-
     public Employee GetEmployeeWithChildrenById(int? id)
     {
         Employee employee = null;
@@ -121,8 +120,6 @@ public class Employee_dal
         }
         return employee;
     }
-
-    // YANGILANGAN: Employee va children'larni to'liq boshqarish
     public bool UpdateEmployeeWithChildren(Employee employee, List<int> deletedChildrenIds = null)
     {
         using (NpgsqlConnection con = new(_connectionString))
@@ -132,7 +129,6 @@ public class Employee_dal
             {
                 try
                 {
-                    // 1. Employee ma'lumotlarini yangilash
                     string employeeQuery = "SELECT sp_updateemployee(@p_id, @p_name, @p_gender, @p_company, @p_department)";
                     using (var cmd = new NpgsqlCommand(employeeQuery, con, transaction))
                     {
@@ -143,14 +139,13 @@ public class Employee_dal
                         cmd.Parameters.AddWithValue("p_department", employee.Department ?? (object)DBNull.Value);
 
                         bool employeeUpdated = (bool)cmd.ExecuteScalar();
+
                         if (!employeeUpdated)
                         {
                             transaction.Rollback();
                             return false;
                         }
                     }
-
-                    // 2. O'chirilgan children'larni o'chirish
                     if (deletedChildrenIds != null && deletedChildrenIds.Count > 0)
                     {
                         foreach (int childId in deletedChildrenIds)
@@ -162,8 +157,6 @@ public class Employee_dal
                             }
                         }
                     }
-
-                    // 3. Mavjud va yangi children'larni qayta ishlash
                     if (employee.Children != null && employee.Children.Any())
                     {
                         foreach (var child in employee.Children)
@@ -172,7 +165,6 @@ public class Employee_dal
 
                             if (child.Id > 0)
                             {
-                                // Mavjud child'ni yangilash
                                 if (!UpdateChildInTransaction(child, con, transaction))
                                 {
                                     transaction.Rollback();
@@ -181,7 +173,6 @@ public class Employee_dal
                             }
                             else
                             {
-                                // Yangi child qo'shish
                                 if (!CreateChildInTransaction(child, con, transaction))
                                 {
                                     transaction.Rollback();
@@ -197,37 +188,48 @@ public class Employee_dal
                 catch (Exception ex)
                 {
                     transaction.Rollback();
-                    Console.WriteLine($"UpdateEmployeeWithChildren error: {ex.Message}");
                     return false;
                 }
             }
         }
     }
 
-    // Legacy method - backward compatibility uchun
     public bool UpdateEmployee(Employee employee)
     {
         return UpdateEmployeeWithChildren(employee);
     }
 
-    // Transaction ichida child yaratish
     private bool CreateChildInTransaction(Children child, NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
-        string query = @"INSERT INTO children (name, gender, age, school, grade, employee_id) 
+        try
+        {
+
+            string query = @"INSERT INTO children (name, gender, age, school, grade, employee_id) 
                         VALUES (@name, @gender, @age, @school, @grade, @employee_id)";
-        using var cmd = new NpgsqlCommand(query, connection, transaction);
-        cmd.Parameters.AddWithValue("@name", child.Name ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@gender", child.Gender ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@age", child.Age ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@school", child.School ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@grade", child.Grade ?? (object)DBNull.Value);
-        cmd.Parameters.AddWithValue("@employee_id", child.EmployeeId);
 
-        int result = cmd.ExecuteNonQuery();
-        return result > 0;
+            using var cmd = new NpgsqlCommand(query, connection, transaction);
+
+            cmd.Parameters.AddWithValue("@name", string.IsNullOrWhiteSpace(child.Name) ? (object)DBNull.Value : child.Name);
+            cmd.Parameters.AddWithValue("@gender", string.IsNullOrWhiteSpace(child.Gender) ? (object)DBNull.Value : child.Gender);
+            if (child.Age < 0 || child.Age > 50)
+            {
+                Console.WriteLine($"Invalid age: {child.Age}. Yosh chegarasi mavjud (0 dan 50 gacha)");
+                return false;
+            }
+            cmd.Parameters.AddWithValue("@age", child.Age == 0 ? (object)DBNull.Value : child.Age);
+            cmd.Parameters.AddWithValue("@school", string.IsNullOrWhiteSpace(child.School) ? (object)DBNull.Value : child.School);
+            cmd.Parameters.AddWithValue("@grade", string.IsNullOrWhiteSpace(child.Grade) ? (object)DBNull.Value : child.Grade);
+            cmd.Parameters.AddWithValue("@employee_id", child.EmployeeId);
+
+            int result = cmd.ExecuteNonQuery();
+
+            return result > 0;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
     }
-
-    // Transaction ichida child yangilash
     private bool UpdateChildInTransaction(Children child, NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
         string query = "SELECT sp_updatechildren(@p_id, @p_name, @p_gender, @p_age, @p_school, @p_grade, @p_employee_id)";
@@ -243,8 +245,6 @@ public class Employee_dal
         var result = cmd.ExecuteScalar();
         return result != null && (bool)result;
     }
-
-    // Transaction ichida child o'chirish
     private bool DeleteChildInTransaction(int childId, NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
         try
@@ -254,31 +254,39 @@ public class Employee_dal
             cmd.Parameters.AddWithValue("@id", childId);
 
             int result = cmd.ExecuteNonQuery();
-            Console.WriteLine($"DeleteChildInTransaction: Child ID {childId}, Rows affected: {result}"); // Debug
             return result > 0;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"DeleteChildInTransaction error: {ex.Message}"); // Debug
             return false;
         }
     }
-
-    // Alohida child operatsiyalari
     public bool CreateChildren(Children child)
     {
         using NpgsqlConnection con = new(_connectionString);
         try
         {
             con.Open();
-            return CreateChildInTransaction(child, con, null);
+            using var transaction = con.BeginTransaction();
+
+            bool result = CreateChildInTransaction(child, con, transaction);
+
+            if (result)
+            {
+                transaction.Commit();
+            }
+            else
+            {
+                transaction.Rollback();
+            }
+
+            return result;
         }
-        catch
+        catch (Exception ex)
         {
             return false;
         }
     }
-
     public bool UpdateChildren(Children child)
     {
         using NpgsqlConnection con = new(_connectionString);
@@ -337,13 +345,11 @@ public class Employee_dal
         }
     }
 
-    // Yangi child qo'shish - legacy method
     public bool AddChild(Children child)
     {
         return CreateChildren(child);
     }
 
-    // Bir nechta children'ni yangilash - legacy method
     public bool UpdateChildren(List<Children> children)
     {
         using var connection = new NpgsqlConnection(_connectionString);

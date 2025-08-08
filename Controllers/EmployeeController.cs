@@ -3,7 +3,6 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
-using Newtonsoft.Json;
 
 namespace CRUDDEMO1.Controllers;
 
@@ -18,7 +17,6 @@ public class EmployeeController : Controller
         return View(employees);
     }
 
-    // Export methods remain the same...
     public IActionResult ExportToExcel()
     {
         var employees = employeeDAL.GetAllEmployee().ToList();
@@ -211,53 +209,56 @@ public class EmployeeController : Controller
         return View(employee);
     }
 
-    // YANGILANGAN EDIT METHOD - Barcha operatsiyalarni qo'llab-quvvatlaydi
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Edit(int id, Employee employee, string deletedChildrenIds = "")
+    public IActionResult Edit(int id, Employee employee, Children? NewChild = null)
     {
         if (id != employee.Id)
         {
             return NotFound();
         }
 
+        ModelState.Remove("NewChild.Name");
+        ModelState.Remove("NewChild.Gender");
+        ModelState.Remove("NewChild.Age");
+        ModelState.Remove("NewChild.School");
+        ModelState.Remove("NewChild.Grade");
+        ModelState.Remove("NewChild.EmployeeId");
+
         if (ModelState.IsValid)
         {
             try
             {
-                // O'chirilgan children'lar ID'larini parse qilish
-                List<int> deletedIds = new List<int>();
-                if (!string.IsNullOrEmpty(deletedChildrenIds))
-                {
-                    Console.WriteLine($"Deleted children IDs string: {deletedChildrenIds}"); // Debug
+                Console.WriteLine($"=== Edit POST START ===");
+                Console.WriteLine($"Employee ID: {employee.Id}");
+                Console.WriteLine($"Employee Name: {employee.Name}");
 
-                    var idStrings = deletedChildrenIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var idStr in idStrings)
-                    {
-                        if (int.TryParse(idStr.Trim(), out int childId) && childId > 0)
-                        {
-                            deletedIds.Add(childId);
-                            Console.WriteLine($"Adding child ID to delete: {childId}"); // Debug
-                        }
-                    }
+                if (NewChild != null && !string.IsNullOrWhiteSpace(NewChild.Name))
+                {
+                    Console.WriteLine($"Adding new child: {NewChild.Name}");
+
+                    if (employee.Children == null)
+                        employee.Children = new List<Children>();
+
+                    NewChild.EmployeeId = employee.Id;
+                    NewChild.Id = 0; 
+
+                    employee.Children.Add(NewChild);
+                    Console.WriteLine($"New child added to employee.Children. Total children: {employee.Children.Count}");
                 }
 
-                Console.WriteLine($"Total children to delete: {deletedIds.Count}"); // Debug
-                Console.WriteLine($"Total children to save: {employee.Children?.Count ?? 0}"); // Debug
+                Console.WriteLine($"Total children to process: {employee.Children?.Count ?? 0}");
 
-                // Employee va children'larni yangilash
-                bool result = employeeDAL.UpdateEmployeeWithChildren(employee, deletedIds);
+                bool result = employeeDAL.UpdateEmployeeWithChildren(employee, new List<int>());
 
                 if (result)
                 {
                     int addedCount = employee.Children?.Count(c => c.Id == 0) ?? 0;
                     int updatedCount = employee.Children?.Count(c => c.Id > 0) ?? 0;
-                    int deletedCount = deletedIds.Count;
 
                     TempData["SuccessMessage"] = $"Muvaffaqiyatli yangilandi! " +
                         $"Qo'shildi: {addedCount}, " +
-                        $"Yangilandi: {updatedCount}, " +
-                        $"O'chirildi: {deletedCount}";
+                        $"Yangilandi: {updatedCount}";
 
                     return RedirectToAction("Edit", new { id = employee.Id });
                 }
@@ -268,17 +269,26 @@ public class EmployeeController : Controller
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Edit method error: {ex.Message}"); // Debug
+                Console.WriteLine($"Edit method error: {ex.Message}");
                 ModelState.AddModelError("", "Xato: " + ex.Message);
             }
         }
+        else
+        {
+            Console.WriteLine("ModelState is not valid:");
+            foreach (var error in ModelState)
+            {
+                if (error.Value.Errors.Count > 0)
+                {
+                    Console.WriteLine($"Key: {error.Key}, Errors: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
+                }
+            }
+        }
 
-        // Xatolik bo'lsa, qaytadan employee ma'lumotlarini yuklash
         employee = employeeDAL.GetEmployeeWithChildrenById(id);
         return View(employee);
     }
 
-    // AJAX orqali bitta child yangilash
     [HttpPost]
     public JsonResult UpdateChild([FromBody] Children child)
     {
@@ -304,7 +314,6 @@ public class EmployeeController : Controller
         }
     }
 
-    // AJAX orqali yangi child qo'shish
     [HttpPost]
     public JsonResult AddChild([FromBody] Children child)
     {
@@ -337,7 +346,6 @@ public class EmployeeController : Controller
         }
     }
 
-    // Child o'chirish
     [HttpPost]
     public IActionResult DeleteChild(int childId, int employeeId)
     {
@@ -361,7 +369,6 @@ public class EmployeeController : Controller
         return RedirectToAction("Edit", new { id = employeeId });
     }
 
-    // AJAX orqali child o'chirish
     [HttpPost]
     public JsonResult DeleteChildAjax([FromBody] DeleteChildRequest request)
     {
@@ -415,19 +422,41 @@ public class EmployeeController : Controller
 
         return RedirectToAction("Index");
     }
-}
 
-// Helper class for AJAX requests
-public class DeleteChildRequest
-{
-    public int ChildId { get; set; }
-}
+    [HttpGet]
+    public IActionResult TestDeleteChild(int childId, int employeeId)
+    {
+        try
+        {
+            bool result = employeeDAL.DeleteChild(childId);
+            if (result)
+            {
+                TempData["SuccessMessage"] = $"Bola ID {childId} muvaffaqiyatli o'chirildi!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = $"Bola ID {childId} o'chirishda xato.";
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Xato: " + ex.Message;
+        }
 
-// Helper class for batch operations
-public class BatchUpdateRequest
-{
-    public Employee Employee { get; set; }
-    public List<Children> UpdatedChildren { get; set; }
-    public List<Children> NewChildren { get; set; }
-    public List<int> DeletedChildrenIds { get; set; }
+        return RedirectToAction("Edit", new { id = employeeId });
+    }
+
+
+    public class DeleteChildRequest
+    {
+        public int ChildId { get; set; }
+    }
+
+    public class BatchUpdateRequest
+    {
+        public Employee Employee { get; set; }
+        public List<Children> UpdatedChildren { get; set; }
+        public List<Children> NewChildren { get; set; }
+        public List<int> DeletedChildrenIds { get; set; }
+    }
 }
