@@ -3,7 +3,7 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Mvc;
 using OfficeOpenXml;
-using OfficeOpenXml.Style;
+using Newtonsoft.Json;
 
 namespace CRUDDEMO1.Controllers;
 
@@ -18,18 +18,14 @@ public class EmployeeController : Controller
         return View(employees);
     }
 
+    // Export methods remain the same...
     public IActionResult ExportToExcel()
     {
         var employees = employeeDAL.GetAllEmployee().ToList();
         var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "Employee.xlsx");
         using (var package = new ExcelPackage(new FileInfo(templatePath)))
         {
-            
             var worksheet = package.Workbook.Worksheets[0];
-            //if (worksheet == null)
-            //{
-            //    throw new InvalidOperationException("Fayl topilmadi");
-            //}
 
             for (int i = 0; i < employees.Count; i++)
             {
@@ -92,6 +88,7 @@ public class EmployeeController : Controller
             return File(stream.ToArray(), "application/pdf", fileName);
         }
     }
+
     [HttpPost]
     public IActionResult ExportSelectedToExcel([FromBody] int[] selectedIds)
     {
@@ -132,7 +129,6 @@ public class EmployeeController : Controller
                     range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
                     range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
                 }
-
                 row++;
             }
             worksheet.Cells.AutoFitColumns();
@@ -215,9 +211,10 @@ public class EmployeeController : Controller
         return View(employee);
     }
 
+    // YANGILANGAN EDIT METHOD - Barcha operatsiyalarni qo'llab-quvvatlaydi
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Edit(int id, [Bind("Id,Name,Gender,Company,Department,Children")] Employee employee)
+    public IActionResult Edit(int id, Employee employee, string deletedChildrenIds = "")
     {
         if (id != employee.Id)
         {
@@ -228,12 +225,41 @@ public class EmployeeController : Controller
         {
             try
             {
-                bool result = employeeDAL.UpdateEmployee(employee);
+                // O'chirilgan children'lar ID'larini parse qilish
+                List<int> deletedIds = new List<int>();
+                if (!string.IsNullOrEmpty(deletedChildrenIds))
+                {
+                    Console.WriteLine($"Deleted children IDs string: {deletedChildrenIds}"); // Debug
+
+                    var idStrings = deletedChildrenIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var idStr in idStrings)
+                    {
+                        if (int.TryParse(idStr.Trim(), out int childId) && childId > 0)
+                        {
+                            deletedIds.Add(childId);
+                            Console.WriteLine($"Adding child ID to delete: {childId}"); // Debug
+                        }
+                    }
+                }
+
+                Console.WriteLine($"Total children to delete: {deletedIds.Count}"); // Debug
+                Console.WriteLine($"Total children to save: {employee.Children?.Count ?? 0}"); // Debug
+
+                // Employee va children'larni yangilash
+                bool result = employeeDAL.UpdateEmployeeWithChildren(employee, deletedIds);
 
                 if (result)
                 {
-                    TempData["SuccessMessage"] = "Employee va bolalar ma'lumotlari muvaffaqiyatli yangilandi!";
-                    return RedirectToAction("Index");
+                    int addedCount = employee.Children?.Count(c => c.Id == 0) ?? 0;
+                    int updatedCount = employee.Children?.Count(c => c.Id > 0) ?? 0;
+                    int deletedCount = deletedIds.Count;
+
+                    TempData["SuccessMessage"] = $"Muvaffaqiyatli yangilandi! " +
+                        $"Qo'shildi: {addedCount}, " +
+                        $"Yangilandi: {updatedCount}, " +
+                        $"O'chirildi: {deletedCount}";
+
+                    return RedirectToAction("Edit", new { id = employee.Id });
                 }
                 else
                 {
@@ -242,12 +268,116 @@ public class EmployeeController : Controller
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Edit method error: {ex.Message}"); // Debug
                 ModelState.AddModelError("", "Xato: " + ex.Message);
             }
         }
 
+        // Xatolik bo'lsa, qaytadan employee ma'lumotlarini yuklash
         employee = employeeDAL.GetEmployeeWithChildrenById(id);
         return View(employee);
+    }
+
+    // AJAX orqali bitta child yangilash
+    [HttpPost]
+    public JsonResult UpdateChild([FromBody] Children child)
+    {
+        try
+        {
+            if (child != null && child.Id > 0)
+            {
+                bool result = employeeDAL.UpdateChildren(child);
+                return Json(new
+                {
+                    success = result,
+                    message = result ? "Bola ma'lumotlari muvaffaqiyatli yangilandi" : "Yangilashda xato yuz berdi"
+                });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Noto'g'ri ma'lumotlar" });
+            }
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Xato: " + ex.Message });
+        }
+    }
+
+    // AJAX orqali yangi child qo'shish
+    [HttpPost]
+    public JsonResult AddChild([FromBody] Children child)
+    {
+        try
+        {
+            if (child != null && child.EmployeeId > 0)
+            {
+                bool result = employeeDAL.CreateChildren(child);
+                if (result)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Yangi bola muvaffaqiyatli qo'shildi"
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Bola qo'shishda xato yuz berdi" });
+                }
+            }
+            else
+            {
+                return Json(new { success = false, message = "Noto'g'ri ma'lumotlar" });
+            }
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Xato: " + ex.Message });
+        }
+    }
+
+    // Child o'chirish
+    [HttpPost]
+    public IActionResult DeleteChild(int childId, int employeeId)
+    {
+        try
+        {
+            bool result = employeeDAL.DeleteChild(childId);
+            if (result)
+            {
+                TempData["SuccessMessage"] = "Bola ma'lumotlari muvaffaqiyatli o'chirildi!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Bola ma'lumotlarini o'chirishda xato yuz berdi.";
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = "Xato: " + ex.Message;
+        }
+
+        return RedirectToAction("Edit", new { id = employeeId });
+    }
+
+    // AJAX orqali child o'chirish
+    [HttpPost]
+    public JsonResult DeleteChildAjax([FromBody] DeleteChildRequest request)
+    {
+        try
+        {
+            bool result = employeeDAL.DeleteChild(request.ChildId);
+            return Json(new
+            {
+                success = result,
+                message = result ? "Bola ma'lumotlari o'chirildi" : "O'chirishda xato yuz berdi"
+            });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Xato: " + ex.Message });
+        }
     }
 
     public IActionResult Delete(int? id)
@@ -285,52 +415,19 @@ public class EmployeeController : Controller
 
         return RedirectToAction("Index");
     }
+}
 
-    [HttpPost]
-    public IActionResult DeleteChild(int childId, int employeeId)
-    {
-        try
-        {
-            bool result = employeeDAL.DeleteChild(childId);
-            if (result)
-            {
-                TempData["SuccessMessage"] = "Bola ma'lumotlari muvaffaqiyatli o'chirildi!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Bola ma'lumotlarini o'chirishda xato yuz berdi.";
-            }
-        }
-        catch (Exception ex)
-        {
-            TempData["ErrorMessage"] = "Xato: " + ex.Message;
-        }
+// Helper class for AJAX requests
+public class DeleteChildRequest
+{
+    public int ChildId { get; set; }
+}
 
-        return RedirectToAction("Edit", new { id = employeeId });
-    }
-
-    [HttpPost]
-    public JsonResult UpdateChild([FromBody] Children child)
-    {
-        try
-        {
-            if (ModelState.IsValid)
-            {
-                bool result = employeeDAL.UpdateChildren(child);
-                return Json(new
-                {
-                    success = result,
-                    message = result ? "Muvaffaqiyatli yangilandi" : "Yangilashda xato"
-                });
-            }
-            else
-            {
-                return Json(new { success = false, message = "Ma'lumotlar to'ldirilmagan" });
-            }
-        }
-        catch (Exception ex)
-        {
-            return Json(new { success = false, message = "Xato: " + ex.Message });
-        }
-    }
+// Helper class for batch operations
+public class BatchUpdateRequest
+{
+    public Employee Employee { get; set; }
+    public List<Children> UpdatedChildren { get; set; }
+    public List<Children> NewChildren { get; set; }
+    public List<int> DeletedChildrenIds { get; set; }
 }

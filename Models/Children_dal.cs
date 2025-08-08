@@ -31,6 +31,24 @@ public class Children_dal
     //    con.Open();
     //    return (bool)cmd.ExecuteScalar();
     //}
+    public bool DeleteChild(int childId)
+    {
+        using var connection = new NpgsqlConnection(_connectionString);
+        string query = "DELETE FROM children WHERE id = @id";
+        using var command = new NpgsqlCommand(query, connection);
+        command.Parameters.AddWithValue("@id", childId);
+        try
+        {
+            connection.Open();
+            int result = command.ExecuteNonQuery();
+            return result > 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
 
     //public Children GetChildrenById(int? id)
     //{

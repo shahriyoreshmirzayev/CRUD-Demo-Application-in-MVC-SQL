@@ -1,266 +1,332 @@
-﻿@model Employee
+﻿@model CRUDDEMO1.Models.Employee
 
 @{
-    ViewData["Title"] = "Edit Employee";
+    ViewData["Title"] = "Employee tahrirlash";
 }
 
-<h2>Edit Employee</h2>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2 class="mb-4">@ViewData["Title"]</h2>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["SuccessMessage"]
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger">
-        @TempData["ErrorMessage"]
-    </div>
-}
-
-<form asp-action="Edit" method="post">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-    <input asp-for="Id" type="hidden" />
-
-    <div class="form-group">
-        <label asp-for="Name" class="control-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Gender" class="control-label"></label>
-        <select asp-for="Gender" class="form-control">
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-        </select>
-        <span asp-validation-for="Gender" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Company" class="control-label"></label>
-        <input asp-for="Company" class="form-control" />
-        <span asp-validation-for="Company" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Department" class="control-label"></label>
-        <input asp-for="Department" class="form-control" />
-        <span asp-validation-for="Department" class="text-danger"></span>
-    </div>
-
-    <!-- Children Section -->
-    <div class="card mt-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Children Information</h4>
-            <button type="button" class="btn btn-success btn-sm" onclick="addNewChild()">
-                <i class="fas fa-plus"></i> Add Child
-            </button>
-        </div>
-        <div class="card-body" id="childrenContainer">
-            @if (Model.Children != null && Model.Children.Count > 0)
+            @if (TempData["SuccessMessage"] != null)
             {
-                for (int i = 0; i < Model.Children.Count; i++)
-                {
-                    <div class="border p-3 mb-3 child-item" data-index="@i">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5>Child @(i + 1)</h5>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="removeChild(@i)">
-                                <i class="fas fa-trash"></i> Remove
-                            </button>
-                        </div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
 
-                        <input asp-for="Children[i].Id" type="hidden" />
-                        <input asp-for="Children[i].EmployeeId" type="hidden" />
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
 
+            <form asp-action="Edit" method="post" id="employeeForm">
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.Id)
+                <input type="hidden" name="deletedChildrenIds" id="deletedChildrenIds" value="" />
+
+                <!-- Employee Ma'lumotlari -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Employee Ma'lumotlari</h4>
+                    </div>
+                    <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="Children[i].Name" class="control-label">Name</label>
-                                    <input asp-for="Children[i].Name" class="form-control" />
-                                    <span asp-validation-for="Children[i].Name" class="text-danger"></span>
+                                <div class="form-group mb-3">
+                                    <label asp-for="Name" class="form-label">Ism</label>
+                                    <input asp-for="Name" class="form-control" />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label asp-for="Children[i].Gender" class="control-label">Gender</label>
-                                    <select asp-for="Children[i].Gender" class="form-control">
-                                        <option value="">Select Gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
+                                <div class="form-group mb-3">
+                                    <label asp-for="Gender" class="form-label">Jins</label>
+                                    <select asp-for="Gender" class="form-control">
+                                        <option value="">Tanlang...</option>
+                                        <option value="Erkak">Erkak</option>
+                                        <option value="Ayol">Ayol</option>
                                     </select>
-                                    <span asp-validation-for="Children[i].Gender" class="text-danger"></span>
+                                    <span asp-validation-for="Gender" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label asp-for="Children[i].Age" class="control-label">Age</label>
-                                    <input asp-for="Children[i].Age" class="form-control" type="number" />
-                                    <span asp-validation-for="Children[i].Age" class="text-danger"></span>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Company" class="form-label">Kompaniya</label>
+                                    <input asp-for="Company" class="form-control" />
+                                    <span asp-validation-for="Company" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label asp-for="Children[i].School" class="control-label">School</label>
-                                    <input asp-for="Children[i].School" class="form-control" />
-                                    <span asp-validation-for="Children[i].School" class="text-danger"></span>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Department" class="form-label">Bo'lim</label>
+                                    <input asp-for="Department" class="form-control" />
+                                    <span asp-validation-for="Department" class="text-danger"></span>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label asp-for="Children[i].Grade" class="control-label">Grade</label>
-                                    <input asp-for="Children[i].Grade" class="form-control" />
-                                    <span asp-validation-for="Children[i].Grade" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <p id="noChildrenMessage">No children found for this employee.</p>
-            }
-        </div>
-    </div>
-
-    <div class="form-group mt-3">
-        <input type="submit" value="Save Changes" class="btn btn-primary" />
-        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-    </div>
-</form>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
-    <script>
-        let childIndex = @(Model.Children?.Count ?? 0);
-
-        function addNewChild() {
-            // No children message'ni yashirish
-            const noChildrenMsg = document.getElementById('noChildrenMessage');
-            if (noChildrenMsg) {
-                noChildrenMsg.style.display = 'none';
-            }
-
-            const container = document.getElementById('childrenContainer');
-            const newChildHtml = `
-                <div class="border p-3 mb-3 child-item" data-index="${childIndex}">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5>Child ${childIndex + 1}</h5>
-                        <button type="button" class="btn btn-danger btn-sm" onclick="removeChild(${childIndex})">
-                            <i class="fas fa-trash"></i> Remove
-                        </button>
-                    </div>
-
-                    <input name="Children[${childIndex}].Id" type="hidden" value="0" />
-                    <input name="Children[${childIndex}].EmployeeId" type="hidden" value="@Model.Id" />
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="control-label">Name</label>
-                                <input name="Children[${childIndex}].Name" class="form-control" />
-                                <span class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="control-label">Gender</label>
-                                <select name="Children[${childIndex}].Gender" class="form-control">
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                                <span class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="control-label">Age</label>
-                                <input name="Children[${childIndex}].Age" class="form-control" type="number" value="0" />
-                                <span class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="control-label">School</label>
-                                <input name="Children[${childIndex}].School" class="form-control" />
-                                <span class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="control-label">Grade</label>
-                                <input name="Children[${childIndex}].Grade" class="form-control" />
-                                <span class="text-danger"></span>
                             </div>
                         </div>
                     </div>
                 </div>
-            `;
+
+                <!-- Children Ma'lumotlari -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Bolalar Ma'lumotlari</h4>
+                        <button type="button" class="btn btn-light btn-sm" onclick="addNewChild()">
+                            <i class="fas fa-plus"></i> Yangi bola qo'shish
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="childrenContainer">
+                            @if (Model.Children != null && Model.Children.Count > 0)
+                            {
+                                for (int i = 0; i < Model.Children.Count; i++)
+                                {
+                                    <div class="child-item border rounded p-3 mb-3" data-child-index="@i">
+                                        @Html.HiddenFor(m => m.Children[i].Id)
+                                        @Html.HiddenFor(m => m.Children[i].EmployeeId)
+
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <div class="form-group mb-2">
+                                                    <label class="form-label">Ism</label>
+                                                    @Html.TextBoxFor(m => m.Children[i].Name, new { @class = "form-control child-name" })
+                                                    <span asp-validation-for="@Model.Children[i].Name" class="text-danger"></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group mb-2">
+                                                    <label class="form-label">Jins</label>
+                                                    @Html.DropDownListFor(m => m.Children[i].Gender,
+                                                    new SelectList(new[] {
+                                                                                        new { Value = "", Text = "Tanlang..." },
+                                                                                        new { Value = "Erkak", Text = "Erkak" },
+                                                                                        new { Value = "Ayol", Text = "Ayol" }
+                                                                                        }, "Value", "Text"),
+                                                                                        new { @class = "form-control child-gender" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <div class="form-group mb-2">
+                                            <label class="form-label">Yosh</label>
+                                            @Html.TextBoxFor(m => m.Children[i].Age, new { @class = "form-control child-age", type = "number", min = "0", max = "30" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group mb-2">
+                                            <label class="form-label">Maktab</label>
+                                            @Html.TextBoxFor(m => m.Children[i].School, new { @class = "form-control child-school" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group mb-2">
+                                            <label class="form-label">Sinf</label>
+                                            @Html.TextBoxFor(m => m.Children[i].Grade, new { @class = "form-control child-grade" })
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-end">
+                                        <button type="button" class="btn btn-danger btn-sm mb-2"
+                                                onclick="removeChildDebug(this, @Model.Children[i].Id)"
+                                                title="O'chirish"
+                                                data-child-id="@Model.Children[i].Id">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                                                        }
+                                                        }
+                                                        else
+                            {
+                                <div class="text-center text-muted">
+                                    <p>Hech qanday bola ma'lumotlari yo'q</p>
+                                    <button type="button" class="btn btn-primary" onclick="addNewChild()">
+                                        Birinchi bola ma'lumotini qo'shish
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-group text-center">
+                    <button type="submit" class="btn btn-success btn-lg me-3">
+                        <i class="fas fa-save"></i> Saqlash
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-arrow-left"></i> Orqaga
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- New Child Template (hidden) -->
+<div id="newChildTemplate" style="display: none;">
+    <div class="child-item border rounded p-3 mb-3" data-child-index="{INDEX}">
+        <input type="hidden" name="Children[{INDEX}].Id" value="0" />
+        <input type="hidden" name="Children[{INDEX}].EmployeeId" value="@Model.Id" />
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group mb-2">
+                    <label class="form-label">Ism</label>
+                    <input name="Children[{INDEX}].Name" class="form-control child-name" />
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group mb-2">
+                    <label class="form-label">Jins</label>
+                    <select name="Children[{INDEX}].Gender" class="form-control child-gender">
+                        <option value="">Tanlang...</option>
+                        <option value="Erkak">Erkak</option>
+                        <option value="Ayol">Ayol</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-group mb-2">
+                    <label class="form-label">Yosh</label>
+                    <input name="Children[{INDEX}].Age" class="form-control child-age" type="number" min="0" max="30" value="0" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group mb-2">
+                    <label class="form-label">Maktab</label>
+                    <input name="Children[{INDEX}].School" class="form-control child-school" />
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group mb-2">
+                    <label class="form-label">Sinf</label>
+                    <input name="Children[{INDEX}].Grade" class="form-control child-grade" />
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-danger btn-sm mb-2"
+                        onclick="removeChildDebug(this, 0)"
+                        title="O'chirish"
+                        data-child-id="0">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let childIndex = @(Model.Children?.Count ?? 0);
+        let deletedChildrenIds = [];
+
+        function addNewChild() {
+            const template = document.getElementById('newChildTemplate').innerHTML;
+            const newChildHtml = template.replace(/{INDEX}/g, childIndex);
+
+            const container = document.getElementById('childrenContainer');
+
+            // Agar container bo'sh bo'lsa, birinchi child qo'shishda text-center div'ni o'chirish
+            const emptyMessage = container.querySelector('.text-center.text-muted');
+            if (emptyMessage) {
+                emptyMessage.remove();
+            }
 
             container.insertAdjacentHTML('beforeend', newChildHtml);
             childIndex++;
-            updateChildNumbers();
         }
 
-        function removeChild(index) {
-            const childElement = document.querySelector(`[data-index="${index}"]`);
-            if (childElement) {
-                childElement.remove();
-                updateChildNumbers();
+        function removeChild(button, childId) {
+            console.log('Removing child with ID:', childId); // Debug uchun
 
-                // Agar hech qanday child qolmasa, message'ni ko'rsatish
-                const remainingChildren = document.querySelectorAll('.child-item');
-                if (remainingChildren.length === 0) {
-                    const noChildrenMsg = document.getElementById('noChildrenMessage');
-                    if (noChildrenMsg) {
-                        noChildrenMsg.style.display = 'block';
-                    }
+            if (confirm('Haqiqatan ham bu bola ma\'lumotlarini o\'chirmoqchimisiz?')) {
+                const childItem = button.closest('.child-item');
+
+                // Agar bu mavjud child bo'lsa (ID > 0), deleted list'ga qo'shish
+                if (childId && childId > 0) {
+                    deletedChildrenIds.push(childId);
+                    document.getElementById('deletedChildrenIds').value = deletedChildrenIds.join(',');
+                    console.log('Deleted IDs:', deletedChildrenIds); // Debug uchun
                 }
+
+                // DOM'dan o'chirish
+                childItem.remove();
+
+                // Agar barcha children'lar o'chirilsa, empty message ko'rsatish
+                const container = document.getElementById('childrenContainer');
+                if (container.children.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-muted">
+                            <p>Hech qanday bola ma'lumotlari yo'q</p>
+                            <button type="button" class="btn btn-primary" onclick="addNewChild()">
+                                Birinchi bola ma'lumotini qo'shish
+                            </button>
+                        </div>`;
+                }
+
+                // Index'larni qayta raqamlash
+                reindexChildren();
+
+                console.log('Child removed successfully'); // Debug uchun
             }
         }
 
-        function updateChildNumbers() {
+        function reindexChildren() {
             const childItems = document.querySelectorAll('.child-item');
             childItems.forEach((item, index) => {
-                const title = item.querySelector('h5');
-                if (title) {
-                    title.textContent = `Child ${index + 1}`;
-                }
+                item.setAttribute('data-child-index', index);
 
-                // Input name'larini yangilash
-                const inputs = item.querySelectorAll('input[name*="Children"], select[name*="Children"]');
+                // Input name'larni yangilash
+                const inputs = item.querySelectorAll('input, select');
                 inputs.forEach(input => {
                     const name = input.getAttribute('name');
-                    if (name) {
+                    if (name && name.includes('Children[')) {
                         const newName = name.replace(/Children\[\d+\]/, `Children[${index}]`);
                         input.setAttribute('name', newName);
                     }
                 });
+            });
 
-                // Data-index'ni yangilash
-                item.setAttribute('data-index', index);
+            childIndex = childItems.length;
+        }
 
-                // Remove button'ni yangilash
-                const removeBtn = item.querySelector('button[onclick*="removeChild"]');
-                if (removeBtn) {
-                    removeBtn.setAttribute('onclick', `removeChild(${index})`);
+        // Form submit qilishdan oldin validation va debug
+        document.getElementById('employeeForm').addEventListener('submit', function(e) {
+            console.log('=== FORM SUBMIT DEBUG ===');
+            console.log('Deleted children IDs:', document.getElementById('deletedChildrenIds').value);
+
+            const childItems = document.querySelectorAll('.child-item');
+            console.log('Total children in form:', childItems.length);
+
+            let hasInvalidChild = false;
+
+            childItems.forEach((item, index) => {
+                const name = item.querySelector('.child-name').value.trim();
+                const gender = item.querySelector('.child-gender').value;
+                const age = item.querySelector('.child-age').value;
+
+                console.log(`Child ${index}: Name="${name}", Gender="${gender}", Age="${age}"`);
+
+                if (name && (!gender || !age)) {
+                    hasInvalidChild = true;
                 }
             });
-        }
+
+            console.log('Has invalid child:', hasInvalidChild);
+            console.log('=== FORM SUBMIT DEBUG END ===');
+
+            if (hasInvalidChild) {
+                e.preventDefault();
+                alert('Iltimos, barcha bola ma\'lumotlarini to\'ldiring yoki bo\'sh maydonlarni o\'chiring');
+            }
+        });
     </script>
 }
