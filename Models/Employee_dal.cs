@@ -28,7 +28,6 @@ public class Employee_dal
     }
 
 
-    // Username mavjudligini tekshirish
     public bool UserExists(string username)
     {
         using var connection = new NpgsqlConnection(_connectionString);
@@ -41,7 +40,6 @@ public class Employee_dal
         return count > 0;
     }
 
-    // Parolni qayta tiklash
     public bool ResetPassword(string username, string newPassword)
     {
         try
@@ -62,7 +60,6 @@ public class Employee_dal
         }
     }
 
-    // Avvalgi GetUserByUsername va ValidateUser metodlari
     public User GetUserByUsername(string username)
     {
         using var connection = new NpgsqlConnection(_connectionString);

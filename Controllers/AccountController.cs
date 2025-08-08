@@ -1,8 +1,9 @@
-﻿using CRUDDEMO1.Models;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CRUDDEMO1.Models;
+using BCrypt.Net;
 
 namespace CRUDDEMO1.Controllers;
 
@@ -66,11 +67,11 @@ public class AccountController : Controller
     }
 
     [HttpPost]
-    public IActionResult Register(string username, string password, string role)
+    public IActionResult Register(string username, string password)
     {
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(role))
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
         {
-            ViewBag.ErrorMessage = "Barcha maydonlarni to‘ldiring.";
+            ViewBag.ErrorMessage = "Username yoki parol kiritilmadi.";
             return View();
         }
 
@@ -80,7 +81,7 @@ public class AccountController : Controller
             return View();
         }
 
-        bool result = _employeeDal.RegisterUser(username, password, role);
+        bool result = _employeeDal.RegisterUser(username, password, "Admin");
         if (result)
         {
             TempData["SuccessMessage"] = "Ro‘yxatdan o‘tish muvaffaqiyatli amalga oshirildi! Iltimos, tizimga kiring.";
@@ -143,6 +144,7 @@ public class AccountController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

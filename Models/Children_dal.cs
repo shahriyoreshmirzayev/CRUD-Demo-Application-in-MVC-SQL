@@ -22,15 +22,7 @@ public class Children_dal
         return (bool)cmd.ExecuteScalar();
     }
 
-    //public bool DeleteChildren(int? id)
-    //{
-    //    using NpgsqlConnection con = new(_connectionString);
-    //    string query = "SELECT sp_deletechildren(@p_id)";
-    //    using var cmd = new NpgsqlCommand(query, con);
-    //    cmd.Parameters.AddWithValue("p_id", id);
-    //    con.Open();
-    //    return (bool)cmd.ExecuteScalar();
-    //}
+   
     public bool DeleteChild(int childId)
     {
         using var connection = new NpgsqlConnection(_connectionString);
