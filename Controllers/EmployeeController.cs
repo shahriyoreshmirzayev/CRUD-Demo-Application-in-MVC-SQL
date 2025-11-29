@@ -61,6 +61,7 @@ public class EmployeeController : Controller
                 worksheet.Cells[row, 1].Value = employee.Name;
                 worksheet.Cells[row, 2].Value = employee.Gender;
                 worksheet.Cells[row, 3].Value = employee.Company;
+                worksheet.Cells[row, 4].Value = employee.Department;
             }
             var fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             return File(package.GetAsByteArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
