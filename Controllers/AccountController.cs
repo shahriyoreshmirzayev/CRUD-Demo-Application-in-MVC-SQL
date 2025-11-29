@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using CRUDDEMO1.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using CRUDDEMO1.Models;
-using BCrypt.Net;
 
 namespace CRUDDEMO1.Controllers;
 
