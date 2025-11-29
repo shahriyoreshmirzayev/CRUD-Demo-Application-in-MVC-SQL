@@ -17,7 +17,7 @@ public class EmployeeController : Controller
         List<Employee> employees = employeeDAL.GetAllEmployee().OrderByDescending(e => e.Id).ToList();
         return View(employees);
     }
-    public IActionResult ExportToExcel()
+    /*public IActionResult ExportToExcel()
     {
         var employees = employeeDAL.GetAllEmployee().ToList();
         var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "Employee.xlsx");
@@ -42,7 +42,32 @@ public class EmployeeController : Controller
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                        fileName);
         }
+    }*/
+
+    public IActionResult ExportToExcel()
+    {
+        var employees = employeeDAL.GetAllEmployee().ToList();
+
+        var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "templates", "Employee.xlsx");
+
+        using (var package = new ExcelPackage(new FileInfo(templatePath)))
+        {
+            var worksheet = package.Workbook.Worksheets[0];
+            int startRow = 2;
+            for (int i = 0; i < employees.Count; i++)
+            {
+                var employee = employees[i];
+                int row = startRow + i;
+                worksheet.Cells[row, 1].Value = employee.Name;
+                worksheet.Cells[row, 2].Value = employee.Gender;
+                worksheet.Cells[row, 3].Value = employee.Company;
+            }
+            var fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(package.GetAsByteArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
     }
+
+
 
     public IActionResult ExportToPdf()
     {
@@ -235,7 +260,7 @@ public class EmployeeController : Controller
                         employee.Children = new List<Children>();
 
                     NewChild.EmployeeId = employee.Id;
-                    NewChild.Id = 0; 
+                    NewChild.Id = 0;
 
                     employee.Children.Add(NewChild);
                     Console.WriteLine($"New child added to employee.Children. Total children: {employee.Children.Count}");

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRUDDEMO1", "CRUDDEMO1.csproj", "{BEB77E8C-C270-4591-AD08-94590C645145}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test1employee1", "..\test1employee1\test1employee1.csproj", "{1140B9EA-174C-4D10-941A-D7E811889083}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KAFKA", "..\test1employee1\KAFKA.csproj", "{1140B9EA-174C-4D10-941A-D7E811889083}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
