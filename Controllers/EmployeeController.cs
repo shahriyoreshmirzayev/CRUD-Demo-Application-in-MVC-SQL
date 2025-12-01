@@ -68,8 +68,6 @@ public class EmployeeController : Controller
         }
     }
 
-
-
     public IActionResult ExportToPdf()
     {
         var employees = employeeDAL.GetAllEmployee();
